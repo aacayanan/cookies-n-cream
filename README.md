@@ -16,9 +16,10 @@ ICE TRACK is a web app for managing orders, inventory, shipments, and trouble ti
 
 Make sure you have:
 
-- Node.js
-- Python 3
+- Node.js  [v24.11.1]
+- Python 3  [python 3.11.9]
 - Git
+- npm      [v11.6.2]
 
 Check with:
 
