@@ -1,0 +1,199 @@
+.login-page,
+.login-page * {
+  box-sizing: border-box;
+}
+
+.login-page {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 24px;
+  overflow-y: auto;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  color: #172033;
+  background:
+    radial-gradient(circle at top left, #dff6ff 0, transparent 38%),
+    linear-gradient(135deg, #edf9ff 0%, #f7f9fc 50%, #e8f1ff 100%);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 440px;
+  padding: 38px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #dce6f2;
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(38, 70, 110, 0.16);
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 34px;
+}
+
+.login-logo {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  color: white;
+  font-weight: 800;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #1479ff, #35b8e8);
+  border-radius: 14px;
+}
+
+.login-brand h1 {
+  margin: 0;
+  color: #13233b;
+  font-size: 1.15rem;
+  letter-spacing: 0.05em;
+}
+
+.login-brand p {
+  margin: 4px 0 0;
+  color: #718096;
+  font-size: 0.82rem;
+}
+
+.login-heading {
+  margin-bottom: 26px;
+}
+
+.login-heading h2 {
+  margin: 0 0 8px;
+  color: #172033;
+  font-size: 1.8rem;
+}
+
+.login-heading p {
+  margin: 0;
+  color: #667085;
+  line-height: 1.5;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.login-form label {
+  color: #344054;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.login-form input[type="email"],
+.login-form input[type="password"] {
+  width: 100%;
+  height: 48px;
+  margin-bottom: 10px;
+  padding: 0 14px;
+  color: #172033;
+  font: inherit;
+  background: #ffffff;
+  border: 1px solid #cfd9e6;
+  border-radius: 10px;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.login-form input:focus {
+  border-color: #218cff;
+  box-shadow: 0 0 0 4px rgba(33, 140, 255, 0.12);
+}
+
+.password-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.password-heading a,
+.signup-link a {
+  color: #1479e9;
+  font-size: 0.87rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.password-heading a:hover,
+.signup-link a:hover {
+  text-decoration: underline;
+}
+
+.remember-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  margin: 2px 0 10px;
+  cursor: pointer;
+}
+
+.remember-option input {
+  width: 16px;
+  height: 16px;
+  accent-color: #1479e9;
+}
+
+.remember-option span {
+  color: #475467;
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.login-button {
+  width: 100%;
+  height: 50px;
+  color: white;
+  font: inherit;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1479e9, #239ed4);
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.login-button:hover {
+  box-shadow: 0 10px 22px rgba(20, 121, 233, 0.24);
+  transform: translateY(-1px);
+}
+
+.login-button:active {
+  transform: translateY(0);
+}
+
+.login-message {
+  margin: 6px 0 0;
+  padding: 10px;
+  color: #31506f;
+  font-size: 0.86rem;
+  text-align: center;
+  background: #edf7ff;
+  border-radius: 8px;
+}
+
+.signup-link {
+  margin: 24px 0 0;
+  color: #667085;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .login-card {
+    padding: 28px 22px;
+  }
+}
