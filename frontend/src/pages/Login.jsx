@@ -2,32 +2,66 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import "./Login.css";
 
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
+
 function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    // Supabase authentication will be connected later.
-    setMessage("Login submitted. Authentication is not connected yet.");
+    setMessage("");
+    setMessageType("");
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(`${API_URL}/api/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed");
+      }
+
+      setMessage(data.message || "Login successful");
+      setMessageType("success");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Unable to connect to the backend";
+
+      setMessage(errorMessage);
+      setMessageType("error");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
     <div className="login-page">
       <section className="login-card">
         <div className="login-brand">
-          <div className="login-logo">IC</div>
-
-          <div>
-            <h1>ICE TRACK</h1>
-            <p>Order and inventory management</p>
-          </div>
+          <h1>Cookies-n-Cream</h1>
+          <p>Order and inventory management</p>
         </div>
 
         <div className="login-heading">
-          <h2>Welcome back</h2>
+          <h2>User Login</h2>
           <p>Enter your information to access your account.</p>
         </div>
 
@@ -64,11 +98,22 @@ function Login() {
             <span>Remember me</span>
           </label>
 
-          <button className="login-button" type="submit">
-            Sign in
+          <button
+            className="login-button"
+            type="submit"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Signing in..." : "Sign in"}
           </button>
 
-          {message && <p className="login-message">{message}</p>}
+          {message && (
+            <p
+              className={`login-message ${messageType}`}
+              role={messageType === "error" ? "alert" : "status"}
+            >
+              {message}
+            </p>
+          )}
         </form>
 
         <p className="signup-link">
