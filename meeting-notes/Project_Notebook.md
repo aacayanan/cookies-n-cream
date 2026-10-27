@@ -388,9 +388,21 @@ The requirements are organized around the main ICE TRACK workflow and can be all
 
 ### 8.b. Unit Test Plan
 
+Test suite: `backend/tests/test_login.py` (pytest). Run with `cd backend && source env/bin/activate && python -m pytest tests/ -v`. The Supabase client is mocked, so no `.env` or live database is required.
+
 | Test ID | Unit/component | Objective | Setup / data | Procedure | Expected result | Requirement(s) |
 |---|---|---|---|---|---|---|
-| UT-001 |  |  |  |  |  |  |
+| UT-001 | `GET /api/health` | Health check responds | Flask test client | `GET /api/health` | 200, `{"status":"ok"}` | REQ-011 |
+| UT-002 | `POST /api/login` input validation | Reject missing credentials | JSON body with one or both of `email`/`password` absent (empty object, missing email only, missing password only) | `POST /api/login` for each case | 400, `{"error":"Email and password are required"}` | REQ-011 |
+| UT-003 | `POST /api/login` input validation | Reject blank credentials | Empty email, empty password, whitespace-only email | `POST /api/login` for each case | 400, same error message | REQ-011 |
+| UT-004 | `POST /api/login` input validation | Reject null credentials | `email: null` and `password: null` in body | `POST /api/login` for each case | 400, same error message (no 500 crash) | REQ-011 |
+| UT-005 | `POST /api/login` input validation | Reject non-object request bodies | Non-JSON form-encoded body; JSON array; JSON string | `POST /api/login` with each body type | 400 with JSON error, no 500 | REQ-011 |
+| UT-006 | `POST /api/login` input validation | Normalize email whitespace | `"  user@example.com  "` with a mocked auth client | `POST /api/login`, inspect credentials passed to auth | 200; auth client receives stripped email `user@example.com` | REQ-011 |
+| UT-007 | `POST /api/login` success path | Valid credentials log in | Mocked Supabase returning a user (`id`, `email`) | `POST /api/login` with valid email/password | 200, `{"message":"Login successful","user":{...}}` | REQ-002 |
+| UT-008 | `POST /api/login` failure path | Wrong password rejected | Mocked auth raising `AuthApiError` (invalid credentials) | `POST /api/login` with wrong password | 401, `{"error":"Invalid email or password"}` | REQ-002 |
+| UT-009 | `POST /api/login` failure path | No-user response rejected | Mocked auth returning `user=None` | `POST /api/login` | 401, same invalid-credentials error | REQ-002 |
+| UT-010 | `POST /api/login` failure path | Supabase not configured | Client factory patched to return `None` (missing `.env`) | `POST /api/login` with valid payload | 503, `{"error":"Supabase is not configured"}` | REQ-011 |
+| UT-011 | `POST /api/login` failure path | Unexpected service failure handled | Mocked auth raising an unexpected `RuntimeError` | `POST /api/login` | 502, `{"error":"Authentication service is unavailable"}` (no stack trace leaked) | REQ-011 |
 
 ### 8.c. Unit Test Review Notes *(Optional)*
 
