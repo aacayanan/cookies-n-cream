@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import "./Login.css";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const API_URL =
   import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
@@ -53,74 +63,91 @@ function Login() {
   }
 
   return (
-    <div className="login-page">
-      <section className="login-card">
-        <div className="login-brand">
-          <h1>Cookies-n-Cream</h1>
-          <p>Order and inventory management</p>
-        </div>
+    <main className="flex min-h-svh items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-xl">Cookies-n-Cream</CardTitle>
+          <CardDescription>
+            Sign in to access order and inventory management.
+          </CardDescription>
+        </CardHeader>
 
-        <div className="login-heading">
-          <h2>User Login</h2>
-          <p>Enter your information to access your account.</p>
-        </div>
+        <form onSubmit={handleSubmit}>
+          <CardContent className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="email">Email address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@company.com"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                autoComplete="email"
+                required
+              />
+            </div>
 
-        <form className="login-form" onSubmit={handleSubmit}>
-          <label htmlFor="email">Email address</label>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <a
+                  href="#forgot-password"
+                  className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+                >
+                  Forgot password?
+                </a>
+              </div>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+                required
+              />
+            </div>
 
-          <input
-            id="email"
-            type="email"
-            placeholder="name@company.com"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            autoComplete="email"
-            required
-          />
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="size-4 accent-primary"
+              />
+              Remember me
+            </label>
 
-          <div className="password-heading">
-            <label htmlFor="password">Password</label>
-            <a href="#forgot-password">Forgot password?</a>
-          </div>
+            {message && (
+              <p
+                className={
+                  messageType === "error"
+                    ? "text-sm font-medium text-destructive"
+                    : "text-sm font-medium text-muted-foreground"
+                }
+                role={messageType === "error" ? "alert" : "status"}
+              >
+                {message}
+              </p>
+            )}
+          </CardContent>
 
-          <input
-            id="password"
-            type="password"
-            placeholder="Enter your password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            autoComplete="current-password"
-            required
-          />
+          <CardFooter className="mt-6 flex-col gap-4">
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? "Signing in..." : "Sign in"}
+            </Button>
 
-          <label className="remember-option">
-            <input type="checkbox" />
-            <span>Remember me</span>
-          </label>
-
-          <button
-            className="login-button"
-            type="submit"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Signing in..." : "Sign in"}
-          </button>
-
-          {message && (
-            <p
-              className={`login-message ${messageType}`}
-              role={messageType === "error" ? "alert" : "status"}
-            >
-              {message}
+            <p className="text-sm text-muted-foreground">
+              Need an account?{" "}
+              <Link
+                to="/signup"
+                className="underline underline-offset-4 hover:text-foreground"
+              >
+                Create an account
+              </Link>
             </p>
-          )}
+          </CardFooter>
         </form>
-
-        <p className="signup-link">
-          Need an account? <Link to="/signup">Create an account</Link>
-        </p>
-      </section>
-    </div>
+      </Card>
+    </main>
   );
 }
 
