@@ -30,9 +30,11 @@ def health():
 @app.post("/api/login")
 def login():
     request_data = request.get_json(silent=True) or {}
+    if not isinstance(request_data, dict):
+        return {"error": "Email and password are required"}, 400
 
-    email = request_data.get("email", "").strip()
-    password = request_data.get("password", "")
+    email = (request_data.get("email") or "").strip()
+    password = request_data.get("password") or ""
 
     if not email or not password:
         return {"error": "Email and password are required"}, 400
