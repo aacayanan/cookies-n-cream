@@ -636,20 +636,23 @@ Unlike the unit tests in 8.b (Supabase mocked, single endpoint in isolation), in
 
 ### 8.f. Integration Test Review Notes *(Optional)*
 
-- 
+- First run 10/29/26 (Aaron): the full stack holds together — signup → `auth.users` (pre-confirmed) → `profiles` trigger → login → UI session → route guard is one unbroken chain end-to-end. The auth contract implemented in commit `c568b28` behaves identically against a fresh database as in mocks.
+- Both planned-to-fail tests failed for the *right* reasons: IT-005 reproduced the `Inventory` / `inventory_items` mismatch (PGRST205), and IT-006's API probe showed a data endpoint accepting requests with no token at all — R-002 is a confirmed live gap, not a hypothetical one.
+- Environment notes for the next tester: use `supabase start` from `config.toml` and point a **throwaway** `.env` at `localhost:54321`; never run these against the hosted project (that is what caused R-009). On this machine port 5000 on the host is claimed by macOS AirPlay, so run the test backend on an alternate port (5050 worked); Vite binds IPv6-only, so Playwright should target `localhost`, not `127.0.0.1`.
+- Retest scope after fixes: IT-005 (single endpoint, minutes), IT-006 API half (once JWT validation lands, assert 401 JSON on tokenless calls), and rerun IT-001/IT-002 after any migration changes.
 
 ### 8.g. Integration Test / Retest Results
 
-Not yet executed — the integration tests require the Supabase test environment described in 8.e.
+First execution **10/29/26** on build `c568b28`, tester Aaron, against the local test stack from 8.e: `supabase start` (project `cookies-n-cream-current`, initial migration applied), test backend on port 5050 pointed at the local instance, test Vite instance on port 5175 (`VITE_API_URL` → test backend), Playwright 1.63 headless Chromium. Unique test emails (`it001+…@example.com`, `it004+…@example.com`), no live team data touched. **IT-001–IT-004 and the IT-006 frontend half passed; IT-005 failed exactly as predicted (R-005); the IT-006 API half confirmed R-002.**
 
 | Test ID | Build/version | Execution date | Tester | Actual result | Pass/fail | Defect ID | Retest result |
 |---|---|---|---|---|:---:|---|---|
-| IT-001 |  |  |  | Not executed | — |  |  |
-| IT-002 |  |  |  | Not executed | — |  |  |
-| IT-003 |  |  |  | Not executed | — |  |  |
-| IT-004 |  |  |  | Not executed | — |  |  |
-| IT-005 |  |  |  | Not executed | — |  |  |
-| IT-006 |  |  |  | Not executed (API half blocked by R-002) | — |  |  |
+| IT-001 | c568b28 | 10/29/26 | Aaron | `POST /api/signup` → 201 with full session block; `auth.users` row pre-confirmed (`email_confirmed_at` set immediately); `profiles` row created by the trigger with `full_name="Integration Tester"`, `role=member` | Pass |  |  |
+| IT-002 | c568b28 | 10/29/26 | Aaron | Correct password → 200 with `user` + `access_token`/`refresh_token`/`expires_at`/`token_type`; wrong password → 401 `Invalid email or password` | Pass |  |  |
+| IT-003 | c568b28 | 10/29/26 | Aaron | Login page submitted the IT-001 credentials → redirected to `/dashboard`; `ice-track.session` written to localStorage with all four token fields; sidebar nav rendered | Pass |  |  |
+| IT-004 | c568b28 | 10/29/26 | Aaron | Signup form → 201 → auto sign-in landed on `/dashboard` with session stored, no separate login; repeated same email → 409 surfaced as "An account with that email already exists", stayed on `/signup` with no session | Pass |  |  |
+| IT-005 | c568b28 | 10/29/26 | Aaron | Precheck: `inventory_items` table reachable on the local instance. `GET /api/inventory` → **500** `Could not find the table 'public.Inventory' in the schema cache (PGRST205)` — predicted failure reproduced | **Fail (expected)** | R-005 | Pending fix: retest after query renamed to `inventory_items` |
+| IT-006 | c568b28 | 10/29/26 | Aaron | Frontend half: direct `/dashboard` visit with cleared localStorage → immediate redirect to `/login`. API half: data endpoint called with no token was **not rejected with 401** (responded 500 via the R-005 table bug) — no authentication is enforced, confirming R-002 rather than being blocked by it | Frontend: Pass / API: **Fail** | R-002 | Pending fix: retest both halves after JWT validation lands; API half should return 401 JSON |
 
 ---
 
