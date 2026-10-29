@@ -56,7 +56,7 @@
 | --------------------- | -------- | :--------------------: | ------------- | ------- |
 | Aaron Cayanan         | PM       |           ☐            | Aaron Cayanan | 9/24/26 |
 | Nicolas Reyasbautista | S/W Mgr  |           ☐            |               |         |
-| Marcos Munez          | CM Lead  |           ☐            |               |         |
+| Marcos Munez          | CM Lead  |           ☐            | Marco Munoz   | 10/29/26 |
 | Patricia Alfonso      | Test Mgr |           ☐            |               |         |
 | Matthew Guiao         | Des Mgr  |           ☐            | Matthew Guiao | 10/29/26 |
 | Alex Ivaniuk          | Req Mgr  |           ☐            | Alex Ivaniuk  | 10/29/26 |
@@ -315,7 +315,8 @@ The requirements are organized around the main ICE TRACK workflow and can be all
 
 **Architecture diagram:**
 
-![[architecture-diagram.png]]
+[UML Component Architecture.pdf](https://github.com/user-attachments/files/34155055/UML.Component.Architecture.pdf)
+
 
 **Selected architecture style:** Layered three-service architecture — React SPA (presentation) → Flask REST API (application) → Supabase (data & authentication).
 
@@ -332,7 +333,7 @@ The requirements are organized around the main ICE TRACK workflow and can be all
 
 **Entity-relationship diagram:**
 
-![[database-erd.png]]
+[database-erd.pdf](https://github.com/user-attachments/files/34155091/database-erd.pdf)
 
 **Source:** `supabase/migrations/20261024000000_initial_schema.sql` (Supabase CLI project with `config.toml`), authored by Marcos Munez — commit `491aada`, 10/25/26. The migration defines **8 tables** and **5 enums** (`user_role`, `order_status`, `shipment_status`, `ticket_priority`, `ticket_status`).
 
@@ -453,7 +454,9 @@ The requirements are organized around the main ICE TRACK workflow and can be all
 
 ### 7.c. Requirements-to-Architecture Mapping
 
-> [!note]
+[requirements-architecture-mapping.pdf](https://github.com/user-attachments/files/34155120/requirements-architecture-mapping.pdf)
+
+
 > Maintain the complete mapping in the separate requirements matrix/repository.
 
 **Requirements matrix link:** [[Requirements Traceability Matrix]]
