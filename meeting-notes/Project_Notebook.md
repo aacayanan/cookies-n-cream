@@ -43,7 +43,7 @@
 
 ### Report Date
 
-**Date:**  9/24/26
+**Date:**  10/29/2026
 
 ---
 
@@ -196,15 +196,15 @@ Select one method discussed in class:
 
 | WBS ID / Task                               | Team member or role      | Estimated hours | Actual hours | Remaining hours | Notes                                                                           |
 | ------------------------------------------- | ------------------------ | --------------: | -----------: | --------------: | ------------------------------------------------------------------------------- |
-| 1.1 Scope, requirements, and user flow      | Aaron / Alex             |              20 |            0 |              20 | Includes project scope and requirements organization                            |
-| 1.2 Screen and dashboard design             | Matthew — Design Manager |              20 |            5 |              15 | Includes dashboard, navigation, and main-screen designs                         |
-| 1.3 Technical and repository setup          | Tony / Nico / Marcos     |              40 |            0 |              40 | Includes React, Flask, Supabase, GitHub Workspace, and configuration management |
-| 1.4 Login, roles, navigation, and dashboard | Aaron / Tony             |              45 |            0 |              45 | Initial frontend and backend integration                                        |
+| 1.1 Scope, requirements, and user flow      | Aaron / Alex             |              20 |            1 |              19 | Includes project scope and requirements organization                            |
+| 1.2 Screen and dashboard design             | Matthew — Design Manager |              20 |            3 |              17 | Includes dashboard, navigation, and main-screen designs                         |
+| 1.3 Technical and repository setup          | Tony / Nico / Marcos     |              40 |            10 |              30 | Includes React, Flask, Supabase, GitHub Workspace, and configuration management |
+| 1.4 Login, roles, navigation, and dashboard | Aaron / Tony             |              45 |            10 |              35 | Initial frontend and backend integration                                        |
 | 1.5 Customer, order, and inventory features | Tony / Nico              |              50 |            0 |              50 | Includes customer records, order entry, and inventory checking                  |
-| 1.6 Shipment tracking and trouble tickets   | Alex / Tony              |              40 |            0 |              40 | Includes activity logs and issue tracking                                       |
-| 1.7 Test planning and execution             | Patricia — Test Manager  |              35 |            0 |              35 | Includes test cases, requirements coverage, and defect testing                  |
+| 1.6 Shipment tracking and trouble tickets   | Alex / Tony              |              40 |            4 |              36 | Includes activity logs and issue tracking                                       |
+| 1.7 Test planning and execution             | Patricia — Test Manager  |              35 |            4 |              31 | Includes test cases, requirements coverage, and defect testing                  |
 | 1.8 Documentation and final demonstration   | Aaron / All members      |              30 |            0 |              30 | Includes project documentation and presentation preparation                     |
-| **Total**                                   |                          |         **280** |        **5** |         **275** | Preliminary estimate; update in later deliverables                              |
+| **Total**                                   |                          |         **280** |       **32** |         **248** | Actuals rolled up from §11 Team Timesheets as of 10/29/26                       |
 
 ---
 
@@ -221,8 +221,10 @@ ICE TRACK will be a web-based business management application for managing custo
 
 The initial delivery will focus on the basic user flow, dashboard, authentication, customer creation, order entry, and the connection between the React frontend, Flask backend, and Supabase database.
 
+**Implementation status (10/29/26):** The first increment is running: public routes (`/` landing page, `/login`, `/signup`, `/onboarding`) plus a protected app shell (`/dashboard`, `/customers`, `/orders`, `/inventory`, `/shipments`, `/trouble-tickets`, `/account`). Account creation currently uses self-service signup at `/signup` — users are created pre-confirmed through the backend's admin API — while administrator-issued invitations (UC-01) remain planned. Shipment tracking has a first-draft page on branch `Alex---Shipment-Tracking-page` (commit `1744678`).
 
-#### Performance-Related Requirements
+
+#### Performance-Related RequirementsFor 7E, the detailed design section, should we add that we are adding Shad CN onto this project? I also don't really know what that section entails. For section 7F, informal design notes, I don't know what to put there. 
 
 The following performance requirements are preliminary and may be refined during later deliverables:
 * The login page should respond within approximately three seconds under normal usage.
@@ -265,10 +267,10 @@ The following performance requirements are preliminary and may be refined during
 | REQ-005        | Customer creation and customer viewing              | Application Software / User Process | Sprint 1                                                                | High                | Proposed    |        |
 | REQ-006        | Order entry and order status management             | Application Software / User Process | Sprint 2                                                                | Critical            | Proposed    |        |
 | REQ-007        | Inventory checking and updating                     | Application Software / User Process | Sprint 2                                                                | Critical            | Proposed    |        |
-| REQ-008        | Shipment tracking and activity logs                 | Application Software / User Process | Sprint 2                                                                | High                | Planning    |        |
+| REQ-008        | Shipment tracking and activity logs                 | Application Software / User Process | Sprint 2                                                                | High                | In progress |        |
 | REQ-009        | Trouble-ticket creation and tracking                | Application Software / User Process | Sprint 3                                                                | High                | Proposed    |        |
 | REQ-010        | Administrative metrics and account management       | Application Software                | Later increment                                                         | Medium              | Proposed    |        |
-| REQ-011        | Data validation, error handling, and basic security | Application Software                | Sprint 1 and later increments                                           | Critical            | Proposed    |        |
+| REQ-011        | Data validation, error handling, and basic security | Application Software                | Sprint 1 and later increments                                           | Critical            | In progress |        |
 #### Requirements Quality Discussion
 
 Discuss the following:
@@ -315,13 +317,16 @@ The requirements are organized around the main ICE TRACK workflow and can be all
 
 ![[architecture-diagram.png]]
 
-**Selected architecture style:**  
-**Rationale:**  
+**Selected architecture style:** Layered three-service architecture — React SPA (presentation) → Flask REST API (application) → Supabase (data & authentication).
+
+**Rationale:** The team separates concerns cleanly: the browser never talks to the database directly, so all data access and business rules live in one Python codebase that can be validated and tested, and Supabase's managed Postgres/GoTrue removes the need to run a database server ourselves. Each layer can be developed and swapped independently (the frontend is mocked against the API in tests; the Supabase client is mocked in pytest), which suits a team distributing work across members.
 
 | Project-specific component | Purpose and scope | Responsibilities | Connected components | Connector/interface |
 |---|---|---|---|---|
-|  |  |  |  |  |
-|  |  |  |  |  |
+| React SPA (`frontend/`) | All user-facing pages: landing, login, signup, dashboard, customers, orders, inventory, shipments, trouble tickets, account | Routing (react-router), form input and validation, session storage in localStorage, rendering | Flask REST API | JSON over HTTP (`fetch`, CORS; `VITE_API_URL`, default `http://127.0.0.1:5000`) |
+| Flask REST API (`backend/app.py`) | Single backend service in front of Supabase | `/api/health`, `/api/login`, `/api/signup`, `/api/inventory`; request validation, honest error mapping, session serialization | React SPA (client), Supabase (server) | JSON over HTTP from the frontend; `supabase-py` client from the backend |
+| Supabase (Postgres + Auth) | Managed database and authentication | 8 tables with RLS enabled, enums, triggers (`handle_new_user`, `set_updated_at`), user sign-in/sign-up via admin API | Flask REST API | HTTPS to `SUPABASE_URL` with the `service_role` secret key |
+| Supabase CLI (`supabase/`) | Schema-as-code and local dev config | Versioned migrations (`supabase/migrations/`), `config.toml` environment configuration | Supabase project | `supabase db push` / migration files |
 
 ### 7.b. Database Design
 
@@ -329,18 +334,122 @@ The requirements are organized around the main ICE TRACK workflow and can be all
 
 ![[database-erd.png]]
 
+**Source:** `supabase/migrations/20261024000000_initial_schema.sql` (Supabase CLI project with `config.toml`), authored by Marcos Munez — commit `491aada`, 10/25/26. The migration defines **8 tables** and **5 enums** (`user_role`, `order_status`, `shipment_status`, `ticket_priority`, `ticket_status`).
+
+**Design notes:**
+
+- Credentials live in Supabase's `auth.users`; the application-facing `profiles` table extends it 1:1 and holds the app role (`admin`/`member`) — roles are not stored in Supabase auth.
+- An `on_auth_user_created` trigger runs `handle_new_user()` to create a `profiles` row for every new auth user, reading `full_name` from the signup metadata (falling back to the email prefix).
+- A `set_updated_at` trigger maintains `updated_at` on the seven mutable tables; `shipment_events` is append-only and has no `updated_at`.
+- `order_items.line_total` is a generated column (`quantity * unit_price`); unique constraints enforce one line per item per order and unique SKUs/tracking numbers.
+- Referential rules: deleting an order cascades to its items and shipments; items referenced by orders and inventory referenced by order lines are `restrict`; `created_by`/`assigned_to` are `set null` so history survives user deletion.
+- 14 indexes cover foreign keys and workflow columns (`status`, `category`, `assigned_to`), plus `shipment_events(shipment_id, occurred_at desc)` for shipment timelines.
+- Row-level security is **enabled on all 8 tables with no policies yet** — access is intentionally locked down until the team finalizes admin/member permissions; until then, all reads/writes go through the backend's `service_role` key.
+
 #### Database Dictionary
+
+> [!note]
+> Primary keys are implicitly indexed; the *Indexed?* column marks additional indexes and unique constraints.
 
 | Table | Field / attribute | Data type | Constraints | Primary key? | Foreign key / reference | Indexed? | Definition |
 |---|---|---|---|:---:|---|:---:|---|
-|  |  |  |  | ☐ |  | ☐ |  |
-|  |  |  |  | ☐ |  | ☐ |  |
+| profiles | id | uuid | NOT NULL, cascade delete | ☑ | auth.users(id) | ☐ | Profile for each Supabase Auth user |
+| profiles | full_name | text | NOT NULL | ☐ | | ☐ | Display name, set from signup metadata |
+| profiles | role | user_role | NOT NULL, default `member` | ☐ | | ☐ | Application role: admin or member |
+| profiles | is_active | boolean | NOT NULL, default true | ☐ | | ☐ | Inactive accounts are disabled |
+| profiles | created_at | timestamptz | NOT NULL, default now() | ☐ | | ☐ | Record creation time |
+| profiles | updated_at | timestamptz | NOT NULL, default now() | ☐ | | ☐ | Last update, maintained by trigger |
+| customers | id | uuid | NOT NULL, default `gen_random_uuid()` | ☑ | | ☐ | Customer record identifier |
+| customers | name | text | NOT NULL, non-blank check | ☐ | | ☐ | Customer/company name |
+| customers | email | text | | ☐ | | ☐ | Contact email |
+| customers | phone | text | | ☐ | | ☐ | Contact phone |
+| customers | address_line_1 | text | | ☐ | | ☐ | Street address line 1 |
+| customers | address_line_2 | text | | ☐ | | ☐ | Street address line 2 |
+| customers | city | text | | ☐ | | ☐ | City |
+| customers | state | text | | ☐ | | ☐ | State/province |
+| customers | postal_code | text | | ☐ | | ☐ | ZIP/postal code |
+| customers | notes | text | | ☐ | | ☐ | Free-form notes |
+| customers | created_by | uuid | on delete set null | ☐ | profiles(id) | ☑ | Profile that created the record |
+| customers | created_at | timestamptz | NOT NULL, default now() | ☐ | | ☐ | Record creation time |
+| customers | updated_at | timestamptz | NOT NULL, default now() | ☐ | | ☐ | Last update, maintained by trigger |
+| inventory_items | id | uuid | NOT NULL, default `gen_random_uuid()` | ☑ | | ☐ | Inventory item identifier |
+| inventory_items | sku | text | NOT NULL, unique, non-blank check | ☐ | | ☑ | Stock-keeping unit code |
+| inventory_items | name | text | NOT NULL, non-blank check | ☐ | | ☐ | Item name |
+| inventory_items | description | text | | ☐ | | ☐ | Item description |
+| inventory_items | category | text | | ☐ | | ☑ | Item category, used for filtering |
+| inventory_items | quantity_on_hand | integer | NOT NULL, default 0, ≥ 0 | ☐ | | ☐ | Units currently in stock |
+| inventory_items | reorder_level | integer | NOT NULL, default 0, ≥ 0 | ☐ | | ☐ | Threshold for reorder alerts |
+| inventory_items | unit_price | numeric(12,2) | NOT NULL, default 0, ≥ 0 | ☐ | | ☐ | Price per unit |
+| inventory_items | is_active | boolean | NOT NULL, default true | ☐ | | ☐ | Inactive items are hidden |
+| inventory_items | created_by | uuid | on delete set null | ☐ | profiles(id) | ☑ | Profile that created the record |
+| inventory_items | created_at | timestamptz | NOT NULL, default now() | ☐ | | ☐ | Record creation time |
+| inventory_items | updated_at | timestamptz | NOT NULL, default now() | ☐ | | ☐ | Last update, maintained by trigger |
+| orders | id | uuid | NOT NULL, default `gen_random_uuid()` | ☑ | | ☐ | Order identifier |
+| orders | order_number | bigint | generated always as identity, unique | ☐ | | ☑ | Human-readable sequential order number |
+| orders | customer_id | uuid | NOT NULL, on delete restrict | ☐ | customers(id) | ☑ | Customer who placed the order |
+| orders | status | order_status | NOT NULL, default `pending` | ☐ | | ☑ | Workflow status of the order |
+| orders | notes | text | | ☐ | | ☐ | Free-form order notes |
+| orders | created_by | uuid | on delete set null | ☐ | profiles(id) | ☑ | Profile that entered the order |
+| orders | created_at | timestamptz | NOT NULL, default now() | ☐ | | ☐ | Record creation time |
+| orders | updated_at | timestamptz | NOT NULL, default now() | ☐ | | ☐ | Last update, maintained by trigger |
+| order_items | id | uuid | NOT NULL, default `gen_random_uuid()` | ☑ | | ☐ | Line-item identifier |
+| order_items | order_id | uuid | NOT NULL, on delete cascade | ☐ | orders(id) | ☑ | Order this line belongs to |
+| order_items | inventory_item_id | uuid | NOT NULL, on delete restrict | ☐ | inventory_items(id) | ☑ | Item ordered |
+| order_items | quantity | integer | NOT NULL, > 0 | ☐ | | ☐ | Units ordered |
+| order_items | unit_price | numeric(12,2) | NOT NULL, ≥ 0 | ☐ | | ☐ | Price per unit at time of order |
+| order_items | line_total | numeric(12,2) | generated always as `quantity * unit_price` stored | ☐ | | ☐ | Computed line total |
+| order_items | created_at | timestamptz | NOT NULL, default now() | ☐ | | ☐ | Record creation time |
+| order_items | updated_at | timestamptz | NOT NULL, default now() | ☐ | | ☐ | Last update, maintained by trigger |
+| shipments | id | uuid | NOT NULL, default `gen_random_uuid()` | ☑ | | ☐ | Shipment identifier |
+| shipments | order_id | uuid | NOT NULL, on delete cascade | ☐ | orders(id) | ☑ | Order being shipped |
+| shipments | carrier | text | | ☐ | | ☐ | Shipping carrier name |
+| shipments | tracking_number | text | unique | ☐ | | ☑ | Carrier tracking number |
+| shipments | status | shipment_status | NOT NULL, default `pending` | ☐ | | ☑ | Current shipment status |
+| shipments | shipped_at | timestamptz | | ☐ | | ☐ | Time the shipment left |
+| shipments | estimated_delivery_date | date | | ☐ | | ☐ | Estimated delivery date |
+| shipments | delivered_at | timestamptz | check ≥ shipped_at | ☐ | | ☐ | Actual delivery time |
+| shipments | created_by | uuid | on delete set null | ☐ | profiles(id) | ☐ | Profile that created the record |
+| shipments | created_at | timestamptz | NOT NULL, default now() | ☐ | | ☐ | Record creation time |
+| shipments | updated_at | timestamptz | NOT NULL, default now() | ☐ | | ☐ | Last update, maintained by trigger |
+| shipment_events | id | uuid | NOT NULL, default `gen_random_uuid()` | ☑ | | ☐ | Event identifier |
+| shipment_events | shipment_id | uuid | NOT NULL, on delete cascade | ☐ | shipments(id) | ☑ | Shipment the event belongs to (with occurred_at desc) |
+| shipment_events | status | shipment_status | NOT NULL | ☐ | | ☐ | Status recorded by this event |
+| shipment_events | location | text | | ☐ | | ☐ | Where the event occurred |
+| shipment_events | notes | text | | ☐ | | ☐ | Event details |
+| shipment_events | occurred_at | timestamptz | NOT NULL, default now() | ☐ | | ☑ | When the event occurred (part of timeline index) |
+| shipment_events | created_by | uuid | on delete set null | ☐ | profiles(id) | ☐ | Profile that recorded the event |
+| shipment_events | created_at | timestamptz | NOT NULL, default now() | ☐ | | ☐ | Record creation time |
+| trouble_tickets | id | uuid | NOT NULL, default `gen_random_uuid()` | ☑ | | ☐ | Ticket identifier |
+| trouble_tickets | ticket_number | bigint | generated always as identity, unique | ☐ | | ☑ | Human-readable sequential ticket number |
+| trouble_tickets | order_id | uuid | on delete set null, nullable | ☐ | orders(id) | ☑ | Related order, if any |
+| trouble_tickets | shipment_id | uuid | on delete set null, nullable | ☐ | shipments(id) | ☑ | Related shipment, if any |
+| trouble_tickets | title | text | NOT NULL, non-blank check | ☐ | | ☐ | Ticket summary |
+| trouble_tickets | description | text | NOT NULL, non-blank check | ☐ | | ☐ | Full issue description |
+| trouble_tickets | priority | ticket_priority | NOT NULL, default `medium` | ☐ | | ☐ | Priority: low/medium/high/urgent |
+| trouble_tickets | status | ticket_status | NOT NULL, default `open` | ☐ | | ☑ | Workflow status of the ticket |
+| trouble_tickets | created_by | uuid | on delete set null | ☐ | profiles(id) | ☐ | Profile that opened the ticket |
+| trouble_tickets | assigned_to | uuid | on delete set null | ☐ | profiles(id) | ☑ | Profile assigned to resolve it |
+| trouble_tickets | resolved_at | timestamptz | | ☐ | | ☐ | Time the ticket was resolved |
+| trouble_tickets | created_at | timestamptz | NOT NULL, default now() | ☐ | | ☐ | Record creation time |
+| trouble_tickets | updated_at | timestamptz | NOT NULL, default now() | ☐ | | ☐ | Last update, maintained by trigger |
 
 #### Relationships
 
 | Parent table | Child table | Cardinality | Foreign key | Description |
 |---|---|---|---|---|
-|  |  |  |  |  |
+| auth.users | profiles | 1:1 | profiles.id → auth.users(id) | Profile auto-created by `on_auth_user_created` trigger |
+| profiles | customers | 1:N | customers.created_by → profiles(id) | Audit trail of who created each customer |
+| profiles | inventory_items | 1:N | inventory_items.created_by → profiles(id) | Audit trail of who created each item |
+| profiles | orders | 1:N | orders.created_by → profiles(id) | Audit trail of who entered each order |
+| profiles | shipment_events | 1:N | shipment_events.created_by → profiles(id) | Audit trail of who logged each event |
+| profiles | trouble_tickets | 1:N | trouble_tickets.created_by / assigned_to → profiles(id) | Ticket opener and assignee |
+| customers | orders | 1:N | orders.customer_id → customers(id) | A customer places many orders; deletion restricted while orders exist |
+| orders | order_items | 1:N | order_items.order_id → orders(id) | Orders contain many line items; delete order → delete its lines |
+| inventory_items | order_items | 1:N | order_items.inventory_item_id → inventory_items(id) | An item appears on many order lines; deletion restricted while referenced |
+| orders | shipments | 1:N | shipments.order_id → orders(id) | An order can have many shipments |
+| shipments | shipment_events | 1:N | shipment_events.shipment_id → shipments(id) | Append-only progress history per shipment |
+| orders | trouble_tickets | 1:N | trouble_tickets.order_id → orders(id) | Tickets may reference an order; reference cleared if order deleted |
+| shipments | trouble_tickets | 1:N | trouble_tickets.shipment_id → shipments(id) | Tickets may reference a shipment; reference cleared if shipment deleted |
 
 ### 7.c. Requirements-to-Architecture Mapping
 
@@ -353,19 +462,60 @@ The requirements are organized around the main ICE TRACK workflow and can be all
 
 <!-- Embed UI sketches, wireframes, mockups, or screenshots below. -->
 
-![[ui-prototype.png]]
+![[homesketch.jpg]]
 
 **Design notes:**
+
+Home-page sketch by Matthew Guiao (commit `b01b0dc`, file `ui-sketches/homesketch.jpg`). This mockup is the prototype overview because it defines the app shell shared by every screen — the persistent main navigation bar (logo, home, shipping and tracking, administrator access, profile icon), the landing hero content, and the overall design direction (simple, non-intrusive layout with a 90s/Y2K-inspired look). It also notes that background styling varies page to page to help users orient, and that admin-only controls appear only for administrator accounts.
+
+The remaining sketches in `ui-sketches/` cover individual pages in the same style: `logincreateaccountsketch.jpg` (login/create-account form), `orderssketch.jpg` (order cards with active/cancelled/complete states), `specificorderssketch.jpg` and `specificorderssketch_cancelled.jpg` (order detail views), and `accountinformationsketch.jpg` (profile, password change, and delivery addresses).
 
 
 ### 7.e. Detailed Design
 
 <!-- Add component details, class diagrams, sequence diagrams, algorithms, API contracts, and other implementation-level decisions. -->
 
+#### UI stack — shadcn/ui + Tailwind CSS v4
+
+The frontend uses **Tailwind CSS v4** with **shadcn/ui** components (on Base UI primitives). Components (`Button`, `Card`, `Input`, `Label`) are copied into the repo under `frontend/src/components/ui/` and styled by design tokens (`--background`, `--foreground`, etc.) defined in `frontend/src/index.css`, so the team owns and can modify the source rather than depending on an external component library. Login and signup pages were built against this stack first, and new pages should match it. Note: Base UI's `Button` does not support `asChild` — links styled as buttons use `buttonVariants()` as their `className` instead.
+
+#### Frontend component structure
+
+- `App.jsx` — route table in two groups: public (`/`, `/login`, `/signup`, `/onboarding`) and a protected layout route rendering `AppLayout` (`/dashboard`, `/customers`, `/orders`, `/inventory`, `/shipments`, `/trouble-tickets`, `/account`); unknown paths redirect to `/`.
+- `AppLayout.jsx` — sidebar shell holding a single `NAV_ITEMS` array (label, path, icon), active-link styling, auth guard (redirects to `/login` when no session), and sign-out. Adding a page = one `NAV_ITEMS` entry + one `<Route>`.
+- `lib/auth.js` — session helpers over `localStorage` under the key `ice-track.session`; stores `{ user, session }` as returned by the API.
+
+#### API contract (Flask, `backend/app.py`)
+
+| Endpoint | Request | Success | Errors |
+|---|---|---|---|
+| `GET /api/health` | — | 200 `{"status":"ok"}` | — |
+| `POST /api/login` | `{email, password}` | 200 `{message, user:{id,email}, session:{access_token, refresh_token, expires_at, token_type}}` | 400 validation · 401 invalid credentials · 403 email not confirmed · 502 auth down · 503 not configured |
+| `POST /api/signup` | `{full_name, email, password}` | 201 `{message, user, session}` (`session` may be `null` if auto sign-in fails — account still created) | 400 validation/weak password · 409 email exists · 502 creation failed/unavailable · 503 not configured |
+| `GET /api/inventory` | — | 200 `{"data":[...]}` | 500 query failed · 503 not configured |
+
+Route pattern: validate input → acquire Supabase client → JSON response with explicit status code; auth-specific failures are caught (`AuthApiError` / `AuthWeakPasswordError`) and mapped to friendly messages rather than leaked library errors.
+
+#### Authentication flow
+
+1. **Signup**: backend calls `auth.admin.create_user(email_confirm=True)` — users are created **pre-confirmed** (no email verification, works even when the project's confirm-email setting is on). `full_name` travels in `user_metadata` so the `on_auth_user_created` DB trigger can populate `profiles`.
+2. Backend then calls `sign_in_with_password` to return a session immediately; if that rare step fails, the response still returns 201 with `session: null` and the frontend tells the user to sign in.
+3. **Login**: `sign_in_with_password`; errors are mapped honestly — `invalid_credentials` → 401, `email_not_confirmed` → 403.
+4. Frontend stores the `{user, session}` block in `localStorage` and routes to `/dashboard`; `AppLayout` guards protected routes client-side.
 
 ### 7.f. Informal Design Notes
 
-- 
+- **Why the admin API for signup**: Supabase's regular `sign_up` honors the project's "confirm email" setting (which is on for the hosted project), so new users got stuck unconfirmed. Creating users via `auth.admin.create_user(email_confirm=True)` sidesteps verification entirely — a product decision, not a hack.
+- **Honest error mapping**: login deliberately distinguishes "invalid credentials" (401) from "email not confirmed" (403) instead of masking everything as invalid credentials — the original masking made a real account look nonexistent.
+- **Sessions live in `localStorage`** (`ice-track.session`) as a placeholder: the backend returns Supabase tokens but there is no refresh logic yet. TODO: refresh the token when `expires_at` passes (noted in `lib/auth.js`).
+- **RLS is enabled but policy-less**: all 8 tables have row-level security on with zero policies, so direct client access is denied; the backend's `service_role` key bypasses RLS. Policies are pending finalized admin/member permissions — this is intentional "secure by default."
+- **Roles live in `profiles`, not Supabase auth**: `user_role` (admin/member) is a column on `profiles`; Supabase auth only holds credentials.
+- **Known mismatch**: `/api/inventory` queries a table named `Inventory`, but the schema defines `inventory_items` — reconcile when wiring real inventory data.
+- **Unused env vars**: `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_JWKS_URL` are defined in `.env.example` but unused so far (reserved for future JWT validation).
+- **Route renames**: original flat routes (`OrderEntry`, `ShipmentTracking`, …) were renamed (`Orders`, `Shipments`, …) when the protected shell landed — old paths 404 → redirect to `/`.
+- **Legacy template CSS removed**: the Vite starter's unlayered `h1`/`#root` rules were overriding Tailwind utilities; `index.css` now contains only shadcn tokens + theme, and the unused `App.css` was deleted.
+- **Landing page (`/`) is a placeholder** — basic hero + auth links for now; polish is deferred to a later pass.
+- **Shipment page duplication risk**: Alex's draft (`Alex---Shipment-Tracking-page` branch) builds its own navbar/order-card styling; when merging, it should be rebased onto the shadcn/Tailwind shell and `NAV_ITEMS` instead of introducing a second navigation.
 
 ### 7.g. Design Review Notes *(Optional)*
 
@@ -388,7 +538,10 @@ The requirements are organized around the main ICE TRACK workflow and can be all
 
 ### 8.b. Unit Test Plan
 
-Test suite: `backend/tests/test_login.py` (pytest). Run with `cd backend && source env/bin/activate && python -m pytest tests/ -v`. The Supabase client is mocked, so no `.env` or live database is required.
+Test suite: `backend/tests/` (pytest) — `test_login.py` and `test_signup.py`. Run with `cd backend && source env/bin/activate && python -m pytest tests/ -v`. The Supabase client is mocked, so no `.env` or live database is required.
+
+> [!note] Implemented vs. planned
+> **UT-001–UT-011** (health/login) and **UT-033–UT-041** (signup) are implemented and passing as of build `c568b28` — 32 pytest cases (the validation rows are parametrized), executed 10/29/26. **UT-012–UT-032** are planned coverage for endpoints that are not built yet (logout, auth guards, roles, invitations, customers, orders) — added by Patricia Alfonso in commit `0cf6f9c`, 10/28/26.
 
 | Test ID | Unit/component | Objective | Setup / data | Procedure | Expected result | Requirement(s) |
 |---|---|---|---|---|---|---|
@@ -424,6 +577,15 @@ Test suite: `backend/tests/test_login.py` (pytest). Run with `cd backend && sour
 | UT-030 | `POST /api/orders` | Order total calculation | Two line items (cost 100.00 and 50.00) plus shipping 10.00 | `POST /api/orders` | 201, total = 160.00 | REQ-006 |
 | UT-031 | `POST /api/orders` | Order requires an existing customer | Body with nonexistent `customer_id` | `POST /api/orders` | 400/404, order not created | REQ-006, REQ-011 |
 | UT-032 | `POST /api/orders` | Reject empty or invalid line items | No line items; quantity 0; negative quantity | `POST /api/orders` for each case | 400 with reason | REQ-006, REQ-011 |
+| UT-033 | `POST /api/login` failure path | Unconfirmed email reported distinctly | Mocked auth raising `AuthApiError` (code `email_not_confirmed`) | `POST /api/login` | 403, `{"error":"Confirm your email before signing in"}` — not masked as invalid credentials | REQ-002, REQ-011 |
+| UT-034 | `POST /api/signup` input validation | Reject missing/blank name or email and short/missing password | Payloads with absent name, blank name, absent/empty email, password < 8 chars, no password | `POST /api/signup` for each case | 400 with the specific message (e.g. `"Full name is required"`, `"Password must be at least 8 characters"`) | REQ-001, REQ-011 |
+| UT-035 | `POST /api/signup` input validation | Reject non-object request body | JSON array body | `POST /api/signup` | 400 with JSON error, no 500 | REQ-001, REQ-011 |
+| UT-036 | `POST /api/signup` success path | Creates a pre-confirmed user and returns a session | Mocked `admin.create_user` + `sign_in_with_password` returning a session | `POST /api/signup` with valid payload | 201; `email_confirm` is `True`; `user_metadata.full_name` set; `session` block returned | REQ-001 |
+| UT-037 | `POST /api/signup` success path | Account creation survives auto sign-in failure | `create_user` succeeds; sign-in raises `AuthApiError` | `POST /api/signup` | 201 with `session: null` and a message telling the user to sign in | REQ-001, REQ-011 |
+| UT-038 | `POST /api/signup` failure path | Duplicate email rejected | Mocked `create_user` raising code `email_exists` | `POST /api/signup` | 409, `{"error":"An account with that email already exists"}` | REQ-001, REQ-011 |
+| UT-039 | `POST /api/signup` failure path | Weak password rejected | Mocked `create_user` raising `AuthWeakPasswordError` | `POST /api/signup` | 400 with the reason | REQ-001, REQ-011 |
+| UT-040 | `POST /api/signup` failure path | Supabase not configured | Client factory patched to return `None` (missing `.env`) | `POST /api/signup` with valid payload | 503, `{"error":"Supabase is not configured"}` | REQ-011 |
+| UT-041 | `POST /api/signup` failure path | Unexpected service failure handled | Mocked `create_user` raising an unexpected `RuntimeError` | `POST /api/signup` | 502, `{"error":"Account creation is unavailable"}` (no stack trace leaked) | REQ-011 |
 
 
 ### 8.c. Unit Test Review Notes *(Optional)*
@@ -432,35 +594,65 @@ Test suite: `backend/tests/test_login.py` (pytest). Run with `cd backend && sour
 
 ### 8.d. Unit Test / Retest Results
 
+Executed 10/29/26 against build `c568b28` with `python -m pytest tests/ -v`: **32 passed** (0.16s). Rows UT-012–UT-032 are not executed — those endpoints are not implemented yet.
+
 | Test ID | Build/version | Execution date | Tester | Actual result | Pass/fail | Defect ID | Retest result |
-|---|---|---|---|---|---|---|---|
-| UT-001 |  |  |  |  |  |  |  |
-| UT-002 |  |  |  |  |  |  |  |
-| UT-003 |  |  |  |  |  |  |  |
-| UT-004 |  |  |  |  |  |  |  |
-| UT-005 |  |  |  |  |  |  |  |
-| UT-006 |  |  |  |  |  |  |  |
-| UT-007 |  |  |  |  |  |  |  |
-| UT-008 |  |  |  |  |  |  |  |
-| UT-009 |  |  |  |  |  |  |  |
-| UT-010 |  |  |  |  |  |  |  |
-| UT-011 |  |  |  |  |  |  |  |
+|---|---|---|---|---|:---:|---|---|
+| UT-001 | c568b28 | 10/29/26 | Aaron | 200, `{"status":"ok"}` — as expected | Pass | — | — |
+| UT-002 | c568b28 | 10/29/26 | Aaron | 400 for all missing-credential cases — as expected | Pass | — | — |
+| UT-003 | c568b28 | 10/29/26 | Aaron | 400 for all blank-credential cases — as expected | Pass | — | — |
+| UT-004 | c568b28 | 10/29/26 | Aaron | 400 for null credentials, no 500 — as expected | Pass | — | — |
+| UT-005 | c568b28 | 10/29/26 | Aaron | 400 for non-JSON and non-object bodies, no 500 — as expected | Pass | — | — |
+| UT-006 | c568b28 | 10/29/26 | Aaron | 200; auth client received stripped email — as expected | Pass | — | — |
+| UT-007 | c568b28 | 10/29/26 | Aaron | 200 with user and full session block — as expected | Pass | — | — |
+| UT-008 | c568b28 | 10/29/26 | Aaron | 401, `{"error":"Invalid email or password"}` — as expected | Pass | — | — |
+| UT-009 | c568b28 | 10/29/26 | Aaron | 401, invalid-credentials error — as expected | Pass | — | — |
+| UT-010 | c568b28 | 10/29/26 | Aaron | 503, `{"error":"Supabase is not configured"}` — as expected | Pass | — | — |
+| UT-011 | c568b28 | 10/29/26 | Aaron | 502, no stack trace leaked — as expected | Pass | — | — |
+| UT-033 | c568b28 | 10/29/26 | Aaron | 403, unconfirmed-email message — as expected | Pass | — | — |
+| UT-034 | c568b28 | 10/29/26 | Aaron | 400 with specific messages for all 6 invalid payloads — as expected | Pass | — | — |
+| UT-035 | c568b28 | 10/29/26 | Aaron | 400 for JSON array body, no 500 — as expected | Pass | — | — |
+| UT-036 | c568b28 | 10/29/26 | Aaron | 201; `email_confirm: True`, `full_name` in metadata, session returned — as expected | Pass | — | — |
+| UT-037 | c568b28 | 10/29/26 | Aaron | 201 with `session: null` and sign-in fallback message — as expected | Pass | — | — |
+| UT-038 | c568b28 | 10/29/26 | Aaron | 409, duplicate-email message — as expected | Pass | — | — |
+| UT-039 | c568b28 | 10/29/26 | Aaron | 400, weak-password reason — as expected | Pass | — | — |
+| UT-040 | c568b28 | 10/29/26 | Aaron | 503, not-configured message — as expected | Pass | — | — |
+| UT-041 | c568b28 | 10/29/26 | Aaron | 502, `{"error":"Account creation is unavailable"}` — as expected | Pass | — | — |
 
 ### 8.e. Integration Test Plan
 
+Unlike the unit tests in 8.b (Supabase mocked, single endpoint in isolation), integration tests exercise two or more real layers together. **Environment:** a dedicated Supabase test instance — the local stack from `config.toml` (`supabase start`) or a separate test project — with the backend's `.env` pointed at it; run the frontend (`npm run dev`) and backend (`python app.py`) for the UI tests. Tools: pytest + `requests`/Flask test client for backend↔Supabase, Playwright for frontend↔backend. Never execute against live team data — use unique test emails per run.
+
 | Test ID | Integrated components | Objective | Setup / data | Procedure | Expected result | Requirement(s) |
 |---|---|---|---|---|---|---|
-| IT-001 |  |  |  |  |  |  |
+| IT-001 | Flask backend ↔ Supabase Auth ↔ Postgres trigger | Account creation flows through all three layers into `profiles` | Test Supabase instance; backend `.env` configured; unused test email | `POST /api/signup` with full_name/email/password; then query `auth.users` and `profiles` | 201 with session block; auth.users row exists pre-confirmed; `profiles` row created by the `on_auth_user_created` trigger with the submitted `full_name` and `role='member'` | REQ-001, REQ-011 |
+| IT-002 | Flask backend ↔ Supabase Auth | Credentials created by IT-001 authenticate and yield usable tokens | Account from IT-001 | `POST /api/login` with correct password; repeat with wrong password | 200 with `user` + full `session` (access/refresh/expires_at/token_type); wrong password → 401 `Invalid email or password` | REQ-002 |
+| IT-003 | React login page ↔ Flask API ↔ Supabase | Complete login flow persists the session and enters the app | Frontend + backend running against the test instance; test account | Open `/login`, enter credentials, submit | Request reaches Flask and returns 200; `ice-track.session` written to localStorage with tokens; redirected to `/dashboard`; sidebar shell renders | REQ-002, REQ-004 |
+| IT-004 | React signup page ↔ Flask API ↔ Supabase | Complete signup flow creates the account and auto-signs in | Both servers running; unique test email | Open `/signup`, fill all fields, submit; then repeat with the same email | First run: 201 → session stored → lands on `/dashboard` without a separate login. Repeat: 409 surfaced as "An account with that email already exists" | REQ-001, REQ-011 |
+| IT-005 | Flask API ↔ Postgres (schema) | Inventory endpoint reads the real database schema | Seeded rows in `inventory_items` | `GET /api/inventory` | 200 with the seeded rows. **Expected to fail today** — endpoint queries `Inventory` but the table is `inventory_items` (risk R-005); passing this test is the exit criterion for that fix | REQ-007 |
+| IT-006 | React route guard ↔ Flask API authentication | Unauthenticated access is rejected at both layers | Cleared localStorage (no session) | Visit `/dashboard` directly; then call a data API endpoint with no token | Frontend immediately redirects to `/login`; API returns 401 with a JSON error. **API half is blocked** until JWT validation lands (risk R-002) — the frontend half runs today | REQ-002, REQ-003, REQ-011 |
+
+**Sequencing:** IT-001 → IT-002 establish the backend against the test instance; IT-003 → IT-004 add the UI layer on top; IT-005 and IT-006 are independent checks that gate the inventory fix (R-005) and API authentication work (R-002) respectively.
 
 ### 8.f. Integration Test Review Notes *(Optional)*
 
-- 
+- First run 10/29/26 (Aaron): the full stack holds together — signup → `auth.users` (pre-confirmed) → `profiles` trigger → login → UI session → route guard is one unbroken chain end-to-end. The auth contract implemented in commit `c568b28` behaves identically against a fresh database as in mocks.
+- Both planned-to-fail tests failed for the *right* reasons: IT-005 reproduced the `Inventory` / `inventory_items` mismatch (PGRST205), and IT-006's API probe showed a data endpoint accepting requests with no token at all — R-002 is a confirmed live gap, not a hypothetical one.
+- Environment notes for the next tester: use `supabase start` from `config.toml` and point a **throwaway** `.env` at `localhost:54321`; never run these against the hosted project (that is what caused R-009). On this machine port 5000 on the host is claimed by macOS AirPlay, so run the test backend on an alternate port (5050 worked); Vite binds IPv6-only, so Playwright should target `localhost`, not `127.0.0.1`.
+- Retest scope after fixes: IT-005 (single endpoint, minutes), IT-006 API half (once JWT validation lands, assert 401 JSON on tokenless calls), and rerun IT-001/IT-002 after any migration changes.
 
 ### 8.g. Integration Test / Retest Results
 
+First execution **10/29/26** on build `c568b28`, tester Aaron, against the local test stack from 8.e: `supabase start` (project `cookies-n-cream-current`, initial migration applied), test backend on port 5050 pointed at the local instance, test Vite instance on port 5175 (`VITE_API_URL` → test backend), Playwright 1.63 headless Chromium. Unique test emails (`it001+…@example.com`, `it004+…@example.com`), no live team data touched. **IT-001–IT-004 and the IT-006 frontend half passed; IT-005 failed exactly as predicted (R-005); the IT-006 API half confirmed R-002.**
+
 | Test ID | Build/version | Execution date | Tester | Actual result | Pass/fail | Defect ID | Retest result |
-|---|---|---|---|---|---|---|---|
-| IT-001 |  |  |  |  |  |  |  |
+|---|---|---|---|---|:---:|---|---|
+| IT-001 | c568b28 | 10/29/26 | Aaron | `POST /api/signup` → 201 with full session block; `auth.users` row pre-confirmed (`email_confirmed_at` set immediately); `profiles` row created by the trigger with `full_name="Integration Tester"`, `role=member` | Pass |  |  |
+| IT-002 | c568b28 | 10/29/26 | Aaron | Correct password → 200 with `user` + `access_token`/`refresh_token`/`expires_at`/`token_type`; wrong password → 401 `Invalid email or password` | Pass |  |  |
+| IT-003 | c568b28 | 10/29/26 | Aaron | Login page submitted the IT-001 credentials → redirected to `/dashboard`; `ice-track.session` written to localStorage with all four token fields; sidebar nav rendered | Pass |  |  |
+| IT-004 | c568b28 | 10/29/26 | Aaron | Signup form → 201 → auto sign-in landed on `/dashboard` with session stored, no separate login; repeated same email → 409 surfaced as "An account with that email already exists", stayed on `/signup` with no session | Pass |  |  |
+| IT-005 | c568b28 | 10/29/26 | Aaron | Precheck: `inventory_items` table reachable on the local instance. `GET /api/inventory` → **500** `Could not find the table 'public.Inventory' in the schema cache (PGRST205)` — predicted failure reproduced | **Fail (expected)** | R-005 | Pending fix: retest after query renamed to `inventory_items` |
+| IT-006 | c568b28 | 10/29/26 | Aaron | Frontend half: direct `/dashboard` visit with cleared localStorage → immediate redirect to `/login`. API half: data endpoint called with no token was **not rejected with 401** (responded 500 via the R-005 table bug) — no authentication is enforced, confirming R-002 rather than being blocked by it | Frontend: Pass / API: **Fail** | R-002 | Pending fix: retest both halves after JWT validation lands; API half should return 401 JSON |
 
 ---
 
@@ -471,15 +663,30 @@ Test suite: `backend/tests/test_login.py` (pytest). Run with `cd backend && sour
 
 | Risk / issue ID | Description | Category | Probability | Impact | Priority | Mitigation / resolution plan | Owner | Target date | Status |
 |---|---|---|---|---|---|---|---|---|---|
-| R-001 |  |  |  |  |  |  |  |  |  |
+| R-001 | All 8 tables have row-level security **enabled with no policies**, and the backend's `service_role` key bypasses RLS entirely — until policies exist, any client-side access is denied outright, and a leaked secret key would expose every table. Blocked on the admin/member permissions being defined (REQ-003). | Security | Medium | High | High | Define the admin/member permission matrix per entity, then write RLS policies in a new timestamped migration. Keep `service_role` backend-only (`.env` is gitignored, never sent to the frontend). | Alex (permissions) / Nico (policies) | Week 3 | Open |
+| R-002 | API endpoints (e.g. `GET /api/inventory`) have no server-side authentication, and Flask runs with wide-open CORS (`CORS(app)`) — any origin can call any endpoint today. Harmless while only auth endpoints exist, but becomes a data-exposure risk the moment real records are served. | Security | High | High | High | Validate Supabase JWTs on protected routes (the reserved `SUPABASE_JWKS_URL` is for exactly this) and restrict CORS to the frontend origin. | Tony / Nico | Week 3 | Open |
+| R-003 | Sessions are stored in `localStorage` with **no refresh flow** — once `expires_at` passes, users hit a dead session, and a token in `localStorage` is readable by any injected script (XSS). | Technical | High | Medium | Medium | Implement the refresh-token flow (TODO in `frontend/src/lib/auth.js`) before login/signup are called done; revisit httpOnly cookies as a hardening step before launch. | Aaron | Week 3 | Open (documented in code) |
+| R-004 | Requirements call for administrator-issued invitations (REQ-001, UC-01), but the shipped flow is open self-service signup — requirements and implementation have diverged. | Requirements / Scope | High | Medium | Medium | Either build the invitation flow before auth is declared complete, or get stakeholder sign-off to re-scope REQ-001 as self-service signup for this deliverable. | Alex / Aaron | Week 3 | Open |
+| R-005 | `GET /api/inventory` queries a table named `Inventory`, but the schema defines `inventory_items` — the endpoint returns 500 whenever it is exercised against the real database. | Quality | High (when used) | Low | Low | Rename the query to `inventory_items` when wiring the Inventory page; add an integration test so the mismatch cannot return. | Tony | Week 3 | Open (known) |
+| R-006 | Alex's shipment-tracking branch diverged before the route restructure and shadcn adoption (own navbar, own CSS, old routes) — merging it as-is would create a second navigation and conflict with `AppLayout`/`NAV_ITEMS`. | Technical / Integration | Medium | Medium | Medium | Rebase `Alex---Shipment-Tracking-page` onto current `main`; port the sketch's content into `AppLayout` + shadcn components instead of carrying parallel styles. | Alex / Aaron | Week 3 (before merge) | Open |
+| R-007 | The unit test plan (UT-001–UT-041) far exceeds implemented coverage: UT-012–UT-032 target endpoints that do not exist yet (logout, auth guards, roles, invitations, customers, orders). Defects could slip through those areas. | Quality | Medium | Medium | Medium | Track implemented vs. planned explicitly (done in §8.b); pair every new endpoint with its planned test rows in the same PR. | Patricia | Week 5 | In progress (plan tracked) |
+| R-008 | Local and hosted Supabase configurations drifted: `config.toml` disables email confirmations locally, but the hosted project has them on — this already caused the "confirm email" bug during signup testing. | Configuration | Low | Medium | Low | Signup no longer depends on the setting (admin API pre-confirms every user, so behavior is deterministic); document hosted auth settings in the repo so drift is caught in review. | Nico | Done | Mitigated |
+| R-009 | User accounts created before the admin-API change exist on the hosted project as unconfirmed and cannot log in (observed during live testing 10/29). | Operations | Low | Low | Low | Delete affected users in Supabase Dashboard → Authentication → Users (or confirm them via the admin API), then re-sign-up with the current flow. | Aaron | 10/31/26 | Open (one-off cleanup) |
 
 ### Areas Needing Further Analysis
 
-- 
+- Admin vs. member permission matrix per table/operation — this blocks R-001 (RLS policies) and REQ-003; needs a decision before Week 3.
+- Session storage strategy: keep `localStorage` (simple, XSS-exposed) vs. move to httpOnly cookies (more infrastructure) before launch.
+- Token refresh design: silent client-side refresh vs. proxying refreshes through the Flask backend.
+- Production deployment target — today everything runs locally with only Supabase in the cloud; hosting for frontend and backend is undetermined (noted in §3.b).
+- Reconcile the `Inventory` / `inventory_items` naming once and for all (code vs. schema).
 
 ### Unanswered Questions
 
-- [ ] 
+- [ ] Do we keep self-service signup alongside the invitation flow when it is built, or does it replace one of them? (R-004)
+- [ ] Must the backend validate JWTs before any non-auth data endpoint goes live, or is the open-API phase acceptable until launch? (R-002)
+- [ ] Which hosted Supabase auth settings do we standardize on (confirm-email off?), and who documents them? (R-008)
+- [ ] Disposition of Alex's branch: rebase onto the shadcn shell, or treat the sketch as design-only and rebuild the page? (R-006)
 
 ---
 
@@ -579,30 +786,40 @@ Test suite: `backend/tests/test_login.py` (pytest). Run with `cd backend && sour
 > [!warning] Living Section
 > Update this section in every deliverable.
 
-| Date      | Team member         | WBS ID / task | Activity description                                                            | Hours | Deliverable / evidence              |
-| --------- | ------------------- | ------------- | ------------------------------------------------------------------------------- | ----: | ----------------------------------- |
-| 09/10     | Aaron / All members | 1.1           | Discussed project scope, user flow, technology stack, and team assignments      |     1 | Meeting notes — 9.10                |
-| 09/15     | Aaron / All members | 1.3           | Reviewed React/Flask setup, GitHub Workspace, database, dashboard, and Sprint 1 |     1 | Meeting notes — 9.15                |
-| 09/17     | Aaron / All members | 1.3           | Confirmed technology decisions, Sprint 1 tasks, and team responsibilities       |     1 | Meeting notes — 9.17                |
-| 09/22     | Matthew             | 1.2           | Designed the main application pages and dashboard layout                        |     1 | Page designs/mockups                |
-| 09/22     | Patricia            | 1.7           | Developed additional test cases and matched them to requirements                |     1 | Test-case document/code             |
-| 09/22     | Alex                | 1.6           | Worked on activity-log and shipment-tracking requirements                       |     1 | Activity-log/shipment design        |
-| 09/22     | Aaron               | 1.3           | Worked on Docker setup                                                          |     1 | GitHub Dockerfiles                  |
-| 09/24     | Nico                | 1.3           | Researched Supabase and database requirements                                   |     1 | Database research/schema            |
-| 09/24     | Tony                | 1.3           | Worked on the React and Flask application setup                                 |     1 | GitHub repository/application setup |
-| **Total** |                     |               |                                                                                 | **9** |                                     |
+| Date      | Team member         | WBS ID / task | Activity description                                                                                                                                      |  Hours | Deliverable / evidence                                                                           |
+| --------- | ------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -----: | ------------------------------------------------------------------------------------------------ |
+| 09/10     | Aaron / All members | 1.1           | Discussed project scope, user flow, technology stack, and team assignments                                                                                |      1 | Meeting notes — 9.10                                                                             |
+| 09/15     | Aaron / All members | 1.3           | Reviewed React/Flask setup, GitHub Workspace, database, dashboard, and Sprint 1                                                                           |      1 | Meeting notes — 9.15                                                                             |
+| 09/16     | Nico                | 1.3           | Set up the Flask backend with Supabase client integration (initial `app.py`)                                                                              |      2 | GitHub commit `0e00dc4` — `backend/app.py`                                                       |
+| 09/17     | Aaron / All members | 1.3           | Confirmed technology decisions, Sprint 1 tasks, and team responsibilities                                                                                 |      1 | Meeting notes — 9.17                                                                             |
+| 09/22     | Matthew             | 1.2           | Designed rough sketches of the main application pages and dashboard layout                                                                                |      1 | GitHub commit `b01b0dc` — `ui-sketches/*.jpg` (6 page sketches)                                  |
+| 09/22     | Patricia            | 1.7           | Developed additional test cases and matched them to requirements                                                                                          |      1 | Test-case document/code                                                                          |
+| 09/22     | Alex                | 1.6           | Worked on activity-log and shipment-tracking requirements                                                                                                 |      1 | Activity-log/shipment design                                                                     |
+| 09/22     | Aaron               | 1.3           | Worked on Docker setup                                                                                                                                    |      1 | GitHub Dockerfiles                                                                               |
+| 09/24     | Nico                | 1.3           | Researched Supabase and database requirements                                                                                                             |      1 | Database research/schema                                                                         |
+| 09/24     | Tony                | 1.3           | Worked on the React and Flask application setup                                                                                                           |      1 | GitHub repository/application setup                                                              |
+| 10/21     | Tony                | 1.4           | Cleaned up project setup/README and added the initial login page                                                                                          |      2 | GitHub commit `075b11a` — `Login.jsx`, `app.py`, `README.md`                                     |
+| 10/24     | Tony                | 1.4           | Connected the login flow to Supabase authentication (frontend ↔ Flask ↔ GoTrue)                                                                           |      2 | GitHub commit `c296296` — `app.py`, `Login.jsx`                                                  |
+| 10/25     | Tony                | 1.3           | Authored the initial Supabase database schema: 8 tables, 5 enums, triggers, indexes, and RLS                                                              |      3 | GitHub commit `491aada` — `supabase/migrations/20261024000000_initial_schema.sql`, `config.toml` |
+| 10/27     | Alex                | 1.6           | First draft of the shipment tracking page: navbar, order cards, status styling                                                                            |      3 | GitHub commit `1744678` — `ShipmentTracking.jsx`/`.css` (branch `Alex---Shipment-Tracking-page`) |
+| 10/28     | Patricia            | 1.7           | Added planned unit tests to the test plan: logout, session handling, role checks, invitations, customers, orders (UT-012–UT-032)                          |      2 | GitHub commit `0cf6f9c` — `Project_Notebook.md` §8.b                                             |
+| 10/28     | Aaron               | 1.4           | Restructured routes: public landing page at `/` plus protected shell for Dashboard, Customers, Orders, Inventory, Shipments, Trouble Tickets, and Account |      2 | GitHub commits — `App.jsx`, `AppLayout.jsx`                                                      |
+| 10/28     | Aaron               | 1.4           | Built the shadcn signup page and wired signup/login to the backend, persisting session tokens in localStorage                                             |      2 | GitHub commits — `Signup.jsx`, `Login.jsx`, `auth.js`                                            |
+| 10/29     | Aaron               | 1.4           | Integrated Supabase auth in Flask: pre-confirmed admin signup (no email verification) with session serialization and honest login error mapping           |      2 | GitHub commits — `app.py`, `.env.example`                                                        |
+| 10/29     | Aaron               | 1.7           | Added and ran pytest coverage for the signup and login endpoints (32 tests passing)                                                                       |      1 | `backend/tests/` — signup/login test cases                                                       |
+| **Total** |                     |               |                                                                                                                                                           | **30** |                                                                                                  |
 
 ### Hours by Team Member
 
 | Team member           | Current period | Cumulative hours |
 | --------------------- | -------------: | ---------------: |
-|  Aaron Cayanan        |                |                  |
-| Marcos Munez          |                |                  |
-| Patricia Alfonso      |                |                  |
-| Matthew Guiao         |                |                  |
-| Alex Ivaniuk          |                |                  |
-| Nicolas Reyasbautista |                |                  |
-| **Total**             |          **0** |            **0** |
+|  Aaron Cayanan        |              7 |               11 |
+| Marcos Munez          |              7 |                8 |
+| Patricia Alfonso      |              2 |                3 |
+| Matthew Guiao         |              0 |                1 |
+| Alex Ivaniuk          |              3 |                4 |
+| Nicolas Reyasbautista |              0 |                3 |
+| **Total**             |         **19** |           **30** |
 
 ---
 
