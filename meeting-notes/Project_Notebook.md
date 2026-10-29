@@ -58,7 +58,7 @@
 | Nicolas Reyasbautista | S/W Mgr  |           ☐            |               |         |
 | Marcos Munez          | CM Lead  |           ☐            |               |         |
 | Patricia Alfonso      | Test Mgr |           ☐            |               |         |
-| Matthew Guiao         | Des Mgr  |           ☐            |               |         |
+| Matthew Guiao         | Des Mgr  |           ☐            | Matthew Guiao | 10/29/26 |
 | Alex Ivaniuk          | Req Mgr  |           ☐            |               |         |
 |                       | S/W Eng  |           ☐            |               |         |
 
@@ -197,14 +197,14 @@ Select one method discussed in class:
 | WBS ID / Task                               | Team member or role      | Estimated hours | Actual hours | Remaining hours | Notes                                                                           |
 | ------------------------------------------- | ------------------------ | --------------: | -----------: | --------------: | ------------------------------------------------------------------------------- |
 | 1.1 Scope, requirements, and user flow      | Aaron / Alex             |              20 |            0 |              20 | Includes project scope and requirements organization                            |
-| 1.2 Screen and dashboard design             | Matthew — Design Manager |              20 |            0 |              20 | Includes dashboard, navigation, and main-screen designs                         |
+| 1.2 Screen and dashboard design             | Matthew — Design Manager |              20 |            5 |              15 | Includes dashboard, navigation, and main-screen designs                         |
 | 1.3 Technical and repository setup          | Tony / Nico / Marcos     |              40 |            0 |              40 | Includes React, Flask, Supabase, GitHub Workspace, and configuration management |
 | 1.4 Login, roles, navigation, and dashboard | Aaron / Tony             |              45 |            0 |              45 | Initial frontend and backend integration                                        |
 | 1.5 Customer, order, and inventory features | Tony / Nico              |              50 |            0 |              50 | Includes customer records, order entry, and inventory checking                  |
 | 1.6 Shipment tracking and trouble tickets   | Alex / Tony              |              40 |            0 |              40 | Includes activity logs and issue tracking                                       |
 | 1.7 Test planning and execution             | Patricia — Test Manager  |              35 |            0 |              35 | Includes test cases, requirements coverage, and defect testing                  |
 | 1.8 Documentation and final demonstration   | Aaron / All members      |              30 |            0 |              30 | Includes project documentation and presentation preparation                     |
-| **Total**                                   |                          |         **280** |        **0** |         **280** | Preliminary estimate; update in later deliverables                              |
+| **Total**                                   |                          |         **280** |        **5** |         **275** | Preliminary estimate; update in later deliverables                              |
 
 ---
 
