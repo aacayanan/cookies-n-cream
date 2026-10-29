@@ -57,7 +57,7 @@
 | Aaron Cayanan         | PM       |           ☐            | Aaron Cayanan | 9/24/26 |
 | Nicolas Reyasbautista | S/W Mgr  |           ☐            | Nicolaus Reyas| 10/29/26|
 | Marcos Munez          | CM Lead  |           ☐            | Marco Munoz   | 10/29/26 |
-| Patricia Alfonso      | Test Mgr |           ☐            |               |         |
+| Patricia Alfonso      | Test Mgr |           ☐            | Patricia Alfonso | 10/29/26 |
 | Matthew Guiao         | Des Mgr  |           ☐            | Matthew Guiao | 10/29/26 |
 | Alex Ivaniuk          | Req Mgr  |           ☐            | Alex Ivaniuk  | 10/29/26 |
 |                       | S/W Eng  |           ☐            |               |         |
@@ -824,7 +824,7 @@ First execution **10/29/26** on build `c568b28`, tester Aaron, against the local
 |---|---:|---:|
 | Aaron Cayanan | 7 | 11 |
 | Marcos Munez | 7 | 8 |
-| Patricia Alfonso | 2 | 3 |
+| Patricia Alfonso | 4 | 7 |
 | Matthew Guiao | 0 | 1 |
 | Alex Ivaniuk | 3 | 4 |
 | Nicolas Reyasbautista | 1 | 4 |
