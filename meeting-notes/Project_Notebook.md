@@ -55,7 +55,7 @@
 | Team member           | Role     | Contribution confirmed | Signature     | Date    |
 | --------------------- | -------- | :--------------------: | ------------- | ------- |
 | Aaron Cayanan         | PM       |           ☐            | Aaron Cayanan | 9/24/26 |
-| Nicolas Reyasbautista | S/W Mgr  |           ☐            |               |         |
+| Nicolas Reyasbautista | S/W Mgr  |           ☐            | Nicolaus Reyas| 10/29/26|
 | Marcos Munez          | CM Lead  |           ☐            | Marco Munoz   | 10/29/26 |
 | Patricia Alfonso      | Test Mgr |           ☐            |               |         |
 | Matthew Guiao         | Des Mgr  |           ☐            | Matthew Guiao | 10/29/26 |
@@ -789,40 +789,47 @@ First execution **10/29/26** on build `c568b28`, tester Aaron, against the local
 > [!warning] Living Section
 > Update this section in every deliverable.
 
-| Date      | Team member         | WBS ID / task | Activity description                                                                                                                                      |  Hours | Deliverable / evidence                                                                           |
-| --------- | ------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -----: | ------------------------------------------------------------------------------------------------ |
-| 09/10     | Aaron / All members | 1.1           | Discussed project scope, user flow, technology stack, and team assignments                                                                                |      1 | Meeting notes — 9.10                                                                             |
-| 09/15     | Aaron / All members | 1.3           | Reviewed React/Flask setup, GitHub Workspace, database, dashboard, and Sprint 1                                                                           |      1 | Meeting notes — 9.15                                                                             |
-| 09/16     | Nico                | 1.3           | Set up the Flask backend with Supabase client integration (initial `app.py`)                                                                              |      2 | GitHub commit `0e00dc4` — `backend/app.py`                                                       |
-| 09/17     | Aaron / All members | 1.3           | Confirmed technology decisions, Sprint 1 tasks, and team responsibilities                                                                                 |      1 | Meeting notes — 9.17                                                                             |
-| 09/22     | Matthew             | 1.2           | Designed rough sketches of the main application pages and dashboard layout                                                                                |      1 | GitHub commit `b01b0dc` — `ui-sketches/*.jpg` (6 page sketches)                                  |
-| 09/22     | Patricia            | 1.7           | Developed additional test cases and matched them to requirements                                                                                          |      1 | Test-case document/code                                                                          |
-| 09/22     | Alex                | 1.6           | Worked on activity-log and shipment-tracking requirements                                                                                                 |      1 | Activity-log/shipment design                                                                     |
-| 09/22     | Aaron               | 1.3           | Worked on Docker setup                                                                                                                                    |      1 | GitHub Dockerfiles                                                                               |
-| 09/24     | Nico                | 1.3           | Researched Supabase and database requirements                                                                                                             |      1 | Database research/schema                                                                         |
-| 09/24     | Tony                | 1.3           | Worked on the React and Flask application setup                                                                                                           |      1 | GitHub repository/application setup                                                              |
-| 10/21     | Tony                | 1.4           | Cleaned up project setup/README and added the initial login page                                                                                          |      2 | GitHub commit `075b11a` — `Login.jsx`, `app.py`, `README.md`                                     |
-| 10/24     | Tony                | 1.4           | Connected the login flow to Supabase authentication (frontend ↔ Flask ↔ GoTrue)                                                                           |      2 | GitHub commit `c296296` — `app.py`, `Login.jsx`                                                  |
-| 10/25     | Tony                | 1.3           | Authored the initial Supabase database schema: 8 tables, 5 enums, triggers, indexes, and RLS                                                              |      3 | GitHub commit `491aada` — `supabase/migrations/20261024000000_initial_schema.sql`, `config.toml` |
-| 10/27     | Alex                | 1.6           | First draft of the shipment tracking page: navbar, order cards, status styling                                                                            |      3 | GitHub commit `1744678` — `ShipmentTracking.jsx`/`.css` (branch `Alex---Shipment-Tracking-page`) |
-| 10/28     | Patricia            | 1.7           | Added planned unit tests to the test plan: logout, session handling, role checks, invitations, customers, orders (UT-012–UT-032)                          |      2 | GitHub commit `0cf6f9c` — `Project_Notebook.md` §8.b                                             |
-| 10/28     | Aaron               | 1.4           | Restructured routes: public landing page at `/` plus protected shell for Dashboard, Customers, Orders, Inventory, Shipments, Trouble Tickets, and Account |      2 | GitHub commits — `App.jsx`, `AppLayout.jsx`                                                      |
-| 10/28     | Aaron               | 1.4           | Built the shadcn signup page and wired signup/login to the backend, persisting session tokens in localStorage                                             |      2 | GitHub commits — `Signup.jsx`, `Login.jsx`, `auth.js`                                            |
-| 10/29     | Aaron               | 1.4           | Integrated Supabase auth in Flask: pre-confirmed admin signup (no email verification) with session serialization and honest login error mapping           |      2 | GitHub commits — `app.py`, `.env.example`                                                        |
-| 10/29     | Aaron               | 1.7           | Added and ran pytest coverage for the signup and login endpoints (32 tests passing)                                                                       |      1 | `backend/tests/` — signup/login test cases                                                       |
-| **Total** |                     |               |                                                                                                                                                           | **30** |                                                                                                  |
 
-### Hours by Team Member
+# Project Timesheet
 
-| Team member           | Current period | Cumulative hours |
-| --------------------- | -------------: | ---------------: |
-|  Aaron Cayanan        |              7 |               11 |
-| Marcos Munez          |              7 |                8 |
-| Patricia Alfonso      |              2 |                3 |
-| Matthew Guiao         |              0 |                1 |
-| Alex Ivaniuk          |              3 |                4 |
-| Nicolas Reyasbautista |              0 |                3 |
-| **Total**             |         **19** |           **30** |
+## Activity Log
+
+| Date | Team member | WBS ID / task | Activity description | Hours | Deliverable / evidence |
+|---|---|---|---|---:|---|
+| 09/10 | Aaron / All members | 1.1 | Discussed project scope, user flow, technology stack, and team assignments | 1 | Meeting notes — 9.10 |
+| 09/15 | Aaron / All members | 1.3 | Reviewed React/Flask setup, GitHub Workspace, database, dashboard, and Sprint 1 | 1 | Meeting notes — 9.15 |
+| 09/16 | Nico | 1.3 | Set up the Flask backend with Supabase client integration (initial `app.py`) | 2 | GitHub commit `0e00dc4` — `backend/app.py` |
+| 09/17 | Aaron / All members | 1.3 | Confirmed technology decisions, Sprint 1 tasks, and team responsibilities | 1 | Meeting notes — 9.17 |
+| 09/22 | Matthew | 1.2 | Designed rough sketches of the main application pages and dashboard layout | 1 | GitHub commit `b01b0dc` — `ui-sketches/*.jpg` |
+| 09/22 | Patricia | 1.7 | Developed additional test cases and matched them to requirements | 1 | Test-case document/code |
+| 09/22 | Alex | 1.6 | Worked on activity-log and shipment-tracking requirements | 1 | Activity-log/shipment design |
+| 09/22 | Aaron | 1.3 | Worked on Docker setup | 1 | GitHub Dockerfiles |
+| 09/24 | Nico | 1.3 | Researched Supabase and database requirements | 1 | Database research/schema |
+| 09/24 | Tony | 1.3 | Worked on the React and Flask application setup | 1 | GitHub repository/application setup |
+| 10/21 | Tony | 1.4 | Cleaned up project setup/README and added the initial login page | 2 | GitHub commit `075b11a` — `Login.jsx`, `app.py`, `README.md` |
+| 10/24 | Tony | 1.4 | Connected the login flow to Supabase authentication (frontend ↔ Flask ↔ GoTrue) | 2 | GitHub commit `c296296` — `app.py`, `Login.jsx` |
+| 10/25 | Tony | 1.3 | Authored the initial Supabase database schema: 8 tables, 5 enums, triggers, indexes, and RLS | 3 | GitHub commit `491aada` — `supabase/migrations/20261024000000_initial_schema.sql`, `config.toml` |
+| 10/27 | Alex | 1.6 | First draft of the shipment tracking page: navbar, order cards, status styling | 3 | GitHub commit `1744678` — `ShipmentTracking.jsx`/`.css` |
+| 10/28 | Patricia | 1.7 | Added planned unit tests to the test plan: logout, session handling, role checks, invitations, customers, orders (UT-012–UT-032) | 2 | GitHub commit `0cf6f9c` — `Project_Notebook.md` §8.b |
+| 10/28 | Aaron | 1.4 | Restructured routes: public landing page at `/` plus protected shell for Dashboard, Customers, Orders, Inventory, Shipments, Trouble Tickets, and Account | 2 | GitHub commits — `App.jsx`, `AppLayout.jsx` |
+| 10/28 | Aaron | 1.4 | Built the shadcn signup page and wired signup/login to the backend, persisting session tokens in localStorage | 2 | GitHub commits — `Signup.jsx`, `Login.jsx`, `auth.js` |
+| 10/29 | Aaron | 1.4 | Integrated Supabase auth in Flask: pre-confirmed admin signup (no email verification) with session serialization and login error mapping | 2 | GitHub commits — `app.py`, `.env.example` |
+| 10/29 | Aaron | 1.7 | Added and ran pytest coverage for the signup and login endpoints (32 tests passing) | 1 | `backend/tests/` — signup/login test cases |
+| 10/29 | Nico | 1.2 | Designed the UML Component Architecture diagram illustrating the application's major components, interfaces, and relationships | 1 | UML Component Architecture diagram |
+| **Total** | | | | **31** | |
+
+## Hours by Team Member
+
+| Team member | Current period | Cumulative hours |
+|---|---:|---:|
+| Aaron Cayanan | 7 | 11 |
+| Marcos Munez | 7 | 8 |
+| Patricia Alfonso | 2 | 3 |
+| Matthew Guiao | 0 | 1 |
+| Alex Ivaniuk | 3 | 4 |
+| Nicolas Reyasbautista | 1 | 4 |
+| **Total** | **20** | **31** |
+
 
 ---
 
