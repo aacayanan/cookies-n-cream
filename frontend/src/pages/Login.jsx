@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,16 +11,23 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { isAuthenticated, setSession } from "@/lib/auth";
 
 const API_URL =
   import.meta.env.VITE_API_URL || "http://127.0.0.1:5000";
 
 function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Already signed in — straight to the dashboard.
+  if (isAuthenticated()) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -49,6 +56,11 @@ function Login() {
 
       setMessage(data.message || "Login successful");
       setMessageType("success");
+
+      // Persist the session, then enter the app.
+      // TODO: store a real token once the backend returns one.
+      setSession({ user: data.user ?? { email } });
+      navigate("/dashboard", { replace: true });
     } catch (error) {
       const errorMessage =
         error instanceof Error
