@@ -59,7 +59,7 @@
 | Marcos Munez          | CM Lead  |           ☐            |               |         |
 | Patricia Alfonso      | Test Mgr |           ☐            |               |         |
 | Matthew Guiao         | Des Mgr  |           ☐            | Matthew Guiao | 10/29/26 |
-| Alex Ivaniuk          | Req Mgr  |           ☐            |               |         |
+| Alex Ivaniuk          | Req Mgr  |           ☐            | Alex Ivaniuk  | 10/29/26 |
 |                       | S/W Eng  |           ☐            |               |         |
 
 ---
