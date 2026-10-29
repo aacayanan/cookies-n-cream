@@ -7,6 +7,15 @@ from supabase import AuthApiError
 
 import app as app_module
 
+# Session payload returned by successful sign-ins; mirrors the supabase-py
+# attributes the /api/login handler reads.
+fake_session = SimpleNamespace(
+    access_token="access-token-123",
+    refresh_token="refresh-token-456",
+    expires_at=1767225600,
+    token_type="bearer",
+)
+
 
 @pytest.fixture()
 def client():
@@ -81,7 +90,10 @@ def test_login_strips_whitespace_from_email(client, mock_supabase):
 
     def fake_sign_in(credentials):
         received.update(credentials)
-        return SimpleNamespace(user=SimpleNamespace(id="u-1", email=credentials["email"]))
+        return SimpleNamespace(
+            user=SimpleNamespace(id="u-1", email=credentials["email"]),
+            session=fake_session,
+        )
 
     mock_supabase.sign_in_with_password = fake_sign_in
 
@@ -106,7 +118,8 @@ def test_health_endpoint_reports_ok(client):
 
 def test_login_success_returns_user(client, mock_supabase):
     mock_supabase.sign_in_with_password = lambda credentials: SimpleNamespace(
-        user=SimpleNamespace(id="abc-123", email="user@example.com")
+        user=SimpleNamespace(id="abc-123", email="user@example.com"),
+        session=fake_session,
     )
 
     response = client.post(
@@ -118,11 +131,17 @@ def test_login_success_returns_user(client, mock_supabase):
     assert response.status_code == 200
     assert body["message"] == "Login successful"
     assert body["user"] == {"id": "abc-123", "email": "user@example.com"}
+    assert body["session"] == {
+        "access_token": "access-token-123",
+        "refresh_token": "refresh-token-456",
+        "expires_at": 1767225600,
+        "token_type": "bearer",
+    }
 
 
 def test_login_with_wrong_password_returns_401(client, mock_supabase):
     def raise_auth_error(credentials):
-        raise AuthApiError("Invalid login credentials", 400, None)
+        raise AuthApiError("Invalid login credentials", 400, "invalid_credentials")
 
     mock_supabase.sign_in_with_password = raise_auth_error
 
@@ -133,6 +152,21 @@ def test_login_with_wrong_password_returns_401(client, mock_supabase):
 
     assert response.status_code == 401
     assert response.get_json()["error"] == "Invalid email or password"
+
+
+def test_login_unconfirmed_email_returns_403(client, mock_supabase):
+    def raise_unconfirmed(credentials):
+        raise AuthApiError("Email not confirmed", 400, "email_not_confirmed")
+
+    mock_supabase.sign_in_with_password = raise_unconfirmed
+
+    response = client.post(
+        "/api/login",
+        json={"email": "user@example.com", "password": "hunter2"},
+    )
+
+    assert response.status_code == 403
+    assert response.get_json()["error"] == "Confirm your email before signing in"
 
 
 def test_login_returns_401_when_no_user_in_response(client, mock_supabase):
