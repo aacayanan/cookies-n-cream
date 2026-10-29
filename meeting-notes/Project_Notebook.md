@@ -403,6 +403,28 @@ Test suite: `backend/tests/test_login.py` (pytest). Run with `cd backend && sour
 | UT-009 | `POST /api/login` failure path | No-user response rejected | Mocked auth returning `user=None` | `POST /api/login` | 401, same invalid-credentials error | REQ-002 |
 | UT-010 | `POST /api/login` failure path | Supabase not configured | Client factory patched to return `None` (missing `.env`) | `POST /api/login` with valid payload | 503, `{"error":"Supabase is not configured"}` | REQ-011 |
 | UT-011 | `POST /api/login` failure path | Unexpected service failure handled | Mocked auth raising an unexpected `RuntimeError` | `POST /api/login` | 502, `{"error":"Authentication service is unavailable"}` (no stack trace leaked) | REQ-011 |
+| UT-012 | `POST /api/logout` | Logout ends the session | Mocked Supabase `sign_out`; valid session token | `POST /api/logout` | 200, `{"message":"Logged out"}`; `sign_out` called once | REQ-002 |
+| UT-013 | `POST /api/logout` | Logout without a session is handled | No session token | `POST /api/logout` | 401 with JSON error, no 500 | REQ-002, REQ-011 |
+| UT-014 | Auth guard (protected routes) | Reject unauthenticated requests | No token or invalid token | `GET /api/customers` | 401, `{"error":"Authentication required"}` | REQ-002, REQ-003 |
+| UT-015 | Session timeout | Expired session is rejected | Token with expired timestamp (mocked clock) | `GET /api/customers` with expired token | 401, session-expired message | REQ-002, REQ-011 |
+| UT-016 | Role check helper | Admin allowed on admin-only route | Mocked user with role `admin` | `GET /api/admin/users` | 200 | REQ-003, REQ-010 |
+| UT-017 | Role check helper | Member blocked from admin-only route | Mocked user with role `member` | `GET /api/admin/users` | 403, `{"error":"Forbidden"}` | REQ-003, REQ-010 |
+| UT-018 | Role check helper | Missing or unknown role denied | Mocked user with no role / role `"guest"` | `GET /api/admin/users` | 403 (deny by default) | REQ-003, REQ-011 |
+| UT-019 | `POST /api/invitations` | Admin creates an invitation | Mocked admin; body `{"email":"new@example.com","role":"member"}` | `POST /api/invitations` | 201, invitation record returned | REQ-001, REQ-010 |
+| UT-020 | `POST /api/invitations` | Member cannot create invitations | Mocked member user | `POST /api/invitations` | 403 | REQ-001, REQ-003 |
+| UT-021 | `POST /api/invitations` | Reject invalid invitation email | Body with `"not-an-email"` and with missing email | `POST /api/invitations` for each case | 400 with reason and minimum requirement | REQ-001, REQ-011 |
+| UT-022 | `POST /api/accept-invite` | Valid invitation creates account | Mocked valid, unused invitation token; strong password | `POST /api/accept-invite` | 201, account created, invitation marked used | REQ-001 |
+| UT-023 | `POST /api/accept-invite` | Invalid, expired, or reused token rejected | Unknown token; expired token; already-used token | `POST /api/accept-invite` for each case | 400/410 with clear error; no account created | REQ-001, REQ-011 |
+| UT-024 | `POST /api/customers` | Create customer with valid data | Mocked insert; name, shipping address, billing address, status `preferred` | `POST /api/customers` | 201, customer returned with an id | REQ-005 |
+| UT-025 | `POST /api/customers` | Reject missing required fields | Body missing name; body missing shipping address | `POST /api/customers` for each case | 400, error states reason and minimum requirements | REQ-005, REQ-011 |
+| UT-026 | `POST /api/customers` | Accept hyphenated names | `"Mary-Jane"` first name, `"Smith-Lee"` last name | `POST /api/customers` | 201, name stored unchanged | REQ-005 |
+| UT-027 | `POST /api/customers` | Reject invalid customer status | Status `"vip"` (not preferred/ok/shaky) | `POST /api/customers` | 400, lists allowed values | REQ-005, REQ-011 |
+| UT-028 | `GET /api/customers?search=` | Wildcard name search | Mocked customers "Smith-Lee", "Smyth", "Jones"; search `Sm*` | `GET /api/customers?search=Sm*` | 200, returns Smith-Lee and Smyth only | REQ-005 |
+| UT-029 | `GET /api/customers/<id>` | Unknown customer id handled | Mocked empty result | `GET /api/customers/999` | 404 with JSON error | REQ-005, REQ-011 |
+| UT-030 | `POST /api/orders` | Order total calculation | Two line items (cost 100.00 and 50.00) plus shipping 10.00 | `POST /api/orders` | 201, total = 160.00 | REQ-006 |
+| UT-031 | `POST /api/orders` | Order requires an existing customer | Body with nonexistent `customer_id` | `POST /api/orders` | 400/404, order not created | REQ-006, REQ-011 |
+| UT-032 | `POST /api/orders` | Reject empty or invalid line items | No line items; quantity 0; negative quantity | `POST /api/orders` for each case | 400 with reason | REQ-006, REQ-011 |
+
 
 ### 8.c. Unit Test Review Notes *(Optional)*
 
@@ -413,6 +435,16 @@ Test suite: `backend/tests/test_login.py` (pytest). Run with `cd backend && sour
 | Test ID | Build/version | Execution date | Tester | Actual result | Pass/fail | Defect ID | Retest result |
 |---|---|---|---|---|---|---|---|
 | UT-001 |  |  |  |  |  |  |  |
+| UT-002 |  |  |  |  |  |  |  |
+| UT-003 |  |  |  |  |  |  |  |
+| UT-004 |  |  |  |  |  |  |  |
+| UT-005 |  |  |  |  |  |  |  |
+| UT-006 |  |  |  |  |  |  |  |
+| UT-007 |  |  |  |  |  |  |  |
+| UT-008 |  |  |  |  |  |  |  |
+| UT-009 |  |  |  |  |  |  |  |
+| UT-010 |  |  |  |  |  |  |  |
+| UT-011 |  |  |  |  |  |  |  |
 
 ### 8.e. Integration Test Plan
 
