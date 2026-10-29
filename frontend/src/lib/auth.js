@@ -1,8 +1,8 @@
-// Minimal client-side auth state.
+// Client-side session storage: { user: { id, email }, session: { access_token,
+// refresh_token, expires_at, token_type } } as returned by POST /api/login.
 //
-// TODO: this is a placeholder until Flask returns a real session token (the
-// /api/login response currently has no token). Replace storage with the
-// session the backend hands back — nothing here should outlive that.
+// TODO: when expires_at passes, refresh via the backend before treating the
+// visitor as signed out — nothing here validates tokens yet.
 const STORAGE_KEY = "ice-track.session";
 
 export function getSession() {

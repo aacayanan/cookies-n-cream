@@ -57,9 +57,8 @@ function Login() {
       setMessage(data.message || "Login successful");
       setMessageType("success");
 
-      // Persist the session, then enter the app.
-      // TODO: store a real token once the backend returns one.
-      setSession({ user: data.user ?? { email } });
+      // Persist the session (user + tokens), then enter the app.
+      setSession({ user: data.user ?? { email }, session: data.session ?? null });
       navigate("/dashboard", { replace: true });
     } catch (error) {
       const errorMessage =
