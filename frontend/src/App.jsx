@@ -11,6 +11,7 @@ import Orders from "./pages/Orders";
 import Inventory from "./pages/Inventory";
 import Shipments from "./pages/Shipments";
 import TroubleTickets from "./pages/TroubleTickets";
+import Reports from "./pages/Reports";
 import Account from "./pages/Account";
 
 function App() {
@@ -32,6 +33,8 @@ function App() {
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/shipments" element={<Shipments />} />
           <Route path="/trouble-tickets" element={<TroubleTickets />} />
+          {/* Reports: reachable from the dashboard quick action; no sidebar entry yet */}
+          <Route path="/reports" element={<Reports />} />
           <Route path="/account" element={<Account />} />
         </Route>
 
