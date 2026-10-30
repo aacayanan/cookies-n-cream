@@ -7,6 +7,8 @@ import Signup from "./pages/Signup";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Customers from "./pages/Customers";
+import CustomerNew from "./pages/CustomerNew";
+import CustomerDetail from "./pages/CustomerDetail";
 import Orders from "./pages/Orders";
 import Inventory from "./pages/Inventory";
 import Shipments from "./pages/Shipments";
@@ -29,6 +31,8 @@ function App() {
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/customers" element={<Customers />} />
+          <Route path="/customers/new" element={<CustomerNew />} />
+          <Route path="/customers/:id" element={<CustomerDetail />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/shipments" element={<Shipments />} />
