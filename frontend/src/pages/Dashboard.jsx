@@ -23,6 +23,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { StatusPill } from "@/components/StatusPill";
+import { formatStatus } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
   alerts,
@@ -53,31 +55,8 @@ const ACTION_ICONS = {
   "bar-chart": BarChart3,
 };
 
-// Statuses that warrant the destructive (red) pill; everything else is neutral gray.
-const CRITICAL_STATUS_IDS = new Set(["delayed", "cancelled", "urgent"]);
 // KPI tiles whose value turns red when non-zero.
 const CRITICAL_KPI_IDS = new Set(["low-stock", "overdue-invoices"]);
-
-function formatStatus(status) {
-  const text = status.replaceAll("_", " ");
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
-function StatusPill({ status }) {
-  const critical = CRITICAL_STATUS_IDS.has(status);
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium",
-        critical
-          ? "border-destructive/30 bg-destructive/10 text-destructive"
-          : "border-border bg-muted text-muted-foreground",
-      )}
-    >
-      {formatStatus(status)}
-    </span>
-  );
-}
 
 function SectionLink({ to, children }) {
   return (
