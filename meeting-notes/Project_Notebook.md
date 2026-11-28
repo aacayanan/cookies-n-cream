@@ -223,6 +223,8 @@ The initial delivery will focus on the basic user flow, dashboard, authenticatio
 
 **Implementation status (10/29/26):** The first increment is running: public routes (`/` landing page, `/login`, `/signup`, `/onboarding`) plus a protected app shell (`/dashboard`, `/customers`, `/orders`, `/inventory`, `/shipments`, `/trouble-tickets`, `/account`). Account creation currently uses self-service signup at `/signup` — users are created pre-confirmed through the backend's admin API — while administrator-issued invitations (UC-01) remain planned. Shipment tracking has a first-draft page on branch `Alex---Shipment-Tracking-page` (commit `1744678`).
 
+**Update (11/22/26):** Data endpoints are now enforced server-side: a `login_required` decorator on the backend verifies the `Authorization: Bearer` token against Supabase Auth and rejects unauthenticated, invalid, or expired requests with 401 (`/api/health`, `/api/login`, and `/api/signup` remain public). The `/api/inventory` table-name mismatch was fixed (`inventory_items`), and CORS is restricted to a configurable origin allowlist (`CORS_ORIGINS`). This closes the API-side halves of risks R-002 and R-005.
+
 
 #### Performance-Related RequirementsFor 7E, the detailed design section, should we add that we are adding Shad CN onto this project? I also don't really know what that section entails. For section 7F, informal design notes, I don't know what to put there. 
 
@@ -495,9 +497,9 @@ The frontend uses **Tailwind CSS v4** with **shadcn/ui** components (on Base UI 
 | `GET /api/health` | — | 200 `{"status":"ok"}` | — |
 | `POST /api/login` | `{email, password}` | 200 `{message, user:{id,email}, session:{access_token, refresh_token, expires_at, token_type}}` | 400 validation · 401 invalid credentials · 403 email not confirmed · 502 auth down · 503 not configured |
 | `POST /api/signup` | `{full_name, email, password}` | 201 `{message, user, session}` (`session` may be `null` if auto sign-in fails — account still created) | 400 validation/weak password · 409 email exists · 502 creation failed/unavailable · 503 not configured |
-| `GET /api/inventory` | — | 200 `{"data":[...]}` | 500 query failed · 503 not configured |
+| `GET /api/inventory` | `Authorization: Bearer <token>` | 200 `{"data":[...]}` from `inventory_items` | 401 missing/malformed or invalid/expired token · 500 query failed · 503 not configured |
 
-Route pattern: validate input → acquire Supabase client → JSON response with explicit status code; auth-specific failures are caught (`AuthApiError` / `AuthWeakPasswordError`) and mapped to friendly messages rather than leaked library errors.
+Route pattern: validate input → acquire Supabase client → JSON response with explicit status code; auth-specific failures are caught (`AuthApiError` / `AuthWeakPasswordError`) and mapped to friendly messages rather than leaked library errors. Data endpoints are wrapped in a `login_required` decorator that verifies the Supabase bearer token via `auth.get_user` and stores the authenticated user on `flask.g` (role checks will build on it); browser origins are restricted to the comma-separated `CORS_ORIGINS` allowlist (default: the Vite dev server).
 
 #### Authentication flow
 
@@ -513,8 +515,10 @@ Route pattern: validate input → acquire Supabase client → JSON response with
 - **Sessions live in `localStorage`** (`ice-track.session`) as a placeholder: the backend returns Supabase tokens but there is no refresh logic yet. TODO: refresh the token when `expires_at` passes (noted in `lib/auth.js`).
 - **RLS is enabled but policy-less**: all 8 tables have row-level security on with zero policies, so direct client access is denied; the backend's `service_role` key bypasses RLS. Policies are pending finalized admin/member permissions — this is intentional "secure by default."
 - **Roles live in `profiles`, not Supabase auth**: `user_role` (admin/member) is a column on `profiles`; Supabase auth only holds credentials.
-- **Known mismatch**: `/api/inventory` queries a table named `Inventory`, but the schema defines `inventory_items` — reconcile when wiring real inventory data.
-- **Unused env vars**: `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_JWKS_URL` are defined in `.env.example` but unused so far (reserved for future JWT validation).
+- **Data endpoints require a verified Supabase JWT** (commit `61f872e`, 11/22/26): `login_required` in `app.py` returns 401 on a missing/malformed `Authorization` header and on an invalid/expired token, verifying via `auth.get_user` (signature, expiry and audience checked server-side by Supabase — no extra dependency). The verified user lands on `flask.g` for the upcoming role checks (D1).
+- **CORS is no longer wide open**: `CORS_ORIGINS` (comma-separated) restricts browser origins, defaulting to the Vite dev server (`http://localhost:5173`, `http://127.0.0.1:5173`); unlisted origins get no `Access-Control-Allow-Origin` header.
+- **Known mismatch (resolved)**: `/api/inventory` used to query a table named `Inventory`, but the schema defines `inventory_items` — fixed in commit `61f872e`; unit tests now assert the query targets `inventory_items` so the mismatch cannot return.
+- **Unused env vars**: `SUPABASE_PUBLISHABLE_KEY` is unused so far (reserved for future client-side use). `SUPABASE_JWKS_URL` is also still unused — token verification currently happens server-side via `auth.get_user`; local JWKS verification is the drop-in follow-up if per-request latency to Supabase ever matters.
 - **Route renames**: original flat routes (`OrderEntry`, `ShipmentTracking`, …) were renamed (`Orders`, `Shipments`, …) when the protected shell landed — old paths 404 → redirect to `/`.
 - **Legacy template CSS removed**: the Vite starter's unlayered `h1`/`#root` rules were overriding Tailwind utilities; `index.css` now contains only shadcn tokens + theme, and the unused `App.css` was deleted.
 - **Landing page (`/`) is a placeholder** — basic hero + auth links for now; polish is deferred to a later pass.
@@ -544,7 +548,7 @@ Route pattern: validate input → acquire Supabase client → JSON response with
 Test suite: `backend/tests/` (pytest) — `test_login.py` and `test_signup.py`. Run with `cd backend && source env/bin/activate && python -m pytest tests/ -v`. The Supabase client is mocked, so no `.env` or live database is required.
 
 > [!note] Implemented vs. planned
-> **UT-001–UT-011** (health/login) and **UT-033–UT-041** (signup) are implemented and passing as of build `c568b28` — 32 pytest cases (the validation rows are parametrized), executed 10/29/26. **UT-012–UT-032** are planned coverage for endpoints that are not built yet (logout, auth guards, roles, invitations, customers, orders) — added by Patricia Alfonso in commit `0cf6f9c`, 10/28/26.
+> **UT-001–UT-011** (health/login) and **UT-033–UT-041** (signup) are implemented and passing as of build `c568b28` — 32 pytest cases (the validation rows are parametrized), executed 10/29/26. **UT-042–UT-047** (data-endpoint authentication, the inventory read, and CORS) are implemented and passing as of build `61f872e` — 45 pytest cases, executed 11/22/26. **UT-012–UT-032** are planned coverage for endpoints that are not built yet (logout, auth guards, roles, invitations, customers, orders) — added by Patricia Alfonso in commit `0cf6f9c`, 10/28/26.
 
 | Test ID | Unit/component | Objective | Setup / data | Procedure | Expected result | Requirement(s) |
 |---|---|---|---|---|---|---|
@@ -589,6 +593,12 @@ Test suite: `backend/tests/` (pytest) — `test_login.py` and `test_signup.py`. 
 | UT-039 | `POST /api/signup` failure path | Weak password rejected | Mocked `create_user` raising `AuthWeakPasswordError` | `POST /api/signup` | 400 with the reason | REQ-001, REQ-011 |
 | UT-040 | `POST /api/signup` failure path | Supabase not configured | Client factory patched to return `None` (missing `.env`) | `POST /api/signup` with valid payload | 503, `{"error":"Supabase is not configured"}` | REQ-011 |
 | UT-041 | `POST /api/signup` failure path | Unexpected service failure handled | Mocked `create_user` raising an unexpected `RuntimeError` | `POST /api/signup` | 502, `{"error":"Account creation is unavailable"}` (no stack trace leaked) | REQ-011 |
+| UT-042 | `GET /api/inventory` authentication | Reject unauthenticated requests | Missing `Authorization` header; empty header; token without scheme; wrong scheme (`Basic`); empty token; whitespace-only token | `GET /api/inventory` for each case | 401, `{"error":"Authentication required"}` | REQ-002, REQ-003, REQ-011 |
+| UT-043 | `GET /api/inventory` authentication | Reject invalid or expired token | Mocked auth raising `AuthApiError` for the presented token | `GET /api/inventory` with `Authorization: Bearer not-a-real-token` | 401, `{"error":"Invalid or expired token"}` | REQ-002, REQ-011 |
+| UT-044 | `GET /api/inventory` success path | Valid token returns inventory from the real schema table | Mocked `auth.get_user` returning a user; mocked table query returning one row | `GET /api/inventory` with a valid bearer token | 200 with the row; the query targets `inventory_items` (not `Inventory`) | REQ-007 |
+| UT-045 | `GET /api/inventory` failure path | Supabase not configured | Client factory patched to return `None` (missing `.env`) | `GET /api/inventory` with any bearer token | 503, `{"error":"Supabase is not configured"}` | REQ-011 |
+| UT-046 | Public endpoints | Auth endpoints stay public | No `Authorization` header | `GET /api/health`; `POST /api/login` (empty body); `POST /api/signup` (empty body) | 200 for health; 400 validation errors for login/signup — no 401 | REQ-002, REQ-011 |
+| UT-047 | CORS allowlist | Browser origins outside the allowlist are rejected | Default `CORS_ORIGINS` (Vite dev origin) | `GET /api/health` with an allowed origin and with an unlisted origin | Allowed origin echoed in `Access-Control-Allow-Origin`; unlisted origin gets no header | REQ-011 |
 
 
 ### 8.c. Unit Test Review Notes *(Optional)*
@@ -597,7 +607,7 @@ Test suite: `backend/tests/` (pytest) — `test_login.py` and `test_signup.py`. 
 
 ### 8.d. Unit Test / Retest Results
 
-Executed 10/29/26 against build `c568b28` with `python -m pytest tests/ -v`: **32 passed** (0.16s). Rows UT-012–UT-032 are not executed — those endpoints are not implemented yet.
+Executed 10/29/26 against build `c568b28` with `python -m pytest tests/ -v`: **32 passed** (0.16s). Rows UT-012–UT-032 are not executed — those endpoints are not implemented yet. Re-executed 11/22/26 against build `61f872e`: **45 passed** (0 failed) — the original 32 still pass, plus the new UT-042–UT-047 authentication/CORS cases.
 
 | Test ID | Build/version | Execution date | Tester | Actual result | Pass/fail | Defect ID | Retest result |
 |---|---|---|---|---|:---:|---|---|
@@ -621,6 +631,12 @@ Executed 10/29/26 against build `c568b28` with `python -m pytest tests/ -v`: **3
 | UT-039 | c568b28 | 10/29/26 | Aaron | 400, weak-password reason — as expected | Pass | — | — |
 | UT-040 | c568b28 | 10/29/26 | Aaron | 503, not-configured message — as expected | Pass | — | — |
 | UT-041 | c568b28 | 10/29/26 | Aaron | 502, `{"error":"Account creation is unavailable"}` — as expected | Pass | — | — |
+| UT-042 | 61f872e | 11/22/26 | Aaron | 401 for all missing/malformed-header cases — as expected | Pass | — | — |
+| UT-043 | 61f872e | 11/22/26 | Aaron | 401, `{"error":"Invalid or expired token"}` — as expected | Pass | — | — |
+| UT-044 | 61f872e | 11/22/26 | Aaron | 200 with the row; query targeted `inventory_items` — as expected | Pass | — | — |
+| UT-045 | 61f872e | 11/22/26 | Aaron | 503, `{"error":"Supabase is not configured"}` — as expected | Pass | — | — |
+| UT-046 | 61f872e | 11/22/26 | Aaron | Health 200; login/signup 400 validation, no 401 — as expected | Pass | — | — |
+| UT-047 | 61f872e | 11/22/26 | Aaron | Allowed origin echoed; unlisted origin gets no `Access-Control-Allow-Origin` — as expected | Pass | — | — |
 
 ### 8.e. Integration Test Plan
 
@@ -654,8 +670,8 @@ First execution **10/29/26** on build `c568b28`, tester Aaron, against the local
 | IT-002 | c568b28 | 10/29/26 | Aaron | Correct password → 200 with `user` + `access_token`/`refresh_token`/`expires_at`/`token_type`; wrong password → 401 `Invalid email or password` | Pass |  |  |
 | IT-003 | c568b28 | 10/29/26 | Aaron | Login page submitted the IT-001 credentials → redirected to `/dashboard`; `ice-track.session` written to localStorage with all four token fields; sidebar nav rendered | Pass |  |  |
 | IT-004 | c568b28 | 10/29/26 | Aaron | Signup form → 201 → auto sign-in landed on `/dashboard` with session stored, no separate login; repeated same email → 409 surfaced as "An account with that email already exists", stayed on `/signup` with no session | Pass |  |  |
-| IT-005 | c568b28 | 10/29/26 | Aaron | Precheck: `inventory_items` table reachable on the local instance. `GET /api/inventory` → **500** `Could not find the table 'public.Inventory' in the schema cache (PGRST205)` — predicted failure reproduced | **Fail (expected)** | R-005 | Pending fix: retest after query renamed to `inventory_items` |
-| IT-006 | c568b28 | 10/29/26 | Aaron | Frontend half: direct `/dashboard` visit with cleared localStorage → immediate redirect to `/login`. API half: data endpoint called with no token was **not rejected with 401** (responded 500 via the R-005 table bug) — no authentication is enforced, confirming R-002 rather than being blocked by it | Frontend: Pass / API: **Fail** | R-002 | Pending fix: retest both halves after JWT validation lands; API half should return 401 JSON |
+| IT-005 | c568b28 | 10/29/26 | Aaron | Precheck: `inventory_items` table reachable on the local instance. `GET /api/inventory` → **500** `Could not find the table 'public.Inventory' in the schema cache (PGRST205)` — predicted failure reproduced | **Fail (expected)** | R-005 | Fix merged (`61f872e`, 11/22/26): query renamed to `inventory_items`, unit-tested — live retest against the test database pending |
+| IT-006 | c568b28 | 10/29/26 | Aaron | Frontend half: direct `/dashboard` visit with cleared localStorage → immediate redirect to `/login`. API half: data endpoint called with no token was **not rejected with 401** (responded 500 via the R-005 table bug) — no authentication is enforced, confirming R-002 rather than being blocked by it | Frontend: Pass / API: **Fail** | R-002 | JWT verification merged (`61f872e`, 11/22/26): tokenless calls are now 401 in unit tests — live retest of both halves pending |
 
 ---
 
@@ -671,6 +687,11 @@ First execution **10/29/26** on build `c568b28`, tester Aaron, against the local
 | R-003 | Sessions are stored in `localStorage` with **no refresh flow** — once `expires_at` passes, users hit a dead session, and a token in `localStorage` is readable by any injected script (XSS). | Technical | High | Medium | Medium | Implement the refresh-token flow (TODO in `frontend/src/lib/auth.js`) before login/signup are called done; revisit httpOnly cookies as a hardening step before launch. | Aaron | Week 3 | Open (documented in code) |
 | R-004 | Requirements call for administrator-issued invitations (REQ-001, UC-01), but the shipped flow is open self-service signup — requirements and implementation have diverged. | Requirements / Scope | High | Medium | Medium | Either build the invitation flow before auth is declared complete, or get stakeholder sign-off to re-scope REQ-001 as self-service signup for this deliverable. **Update 11/27:** decided — build the invitation flow (option A); open signup is removed. See DEC-003 in `meeting-notes/DECISIONS.md`. | Alex / Aaron | Week 3 | Closed (DEC-003, 2026-11-27) |
 | R-005 | `GET /api/inventory` queries a table named `Inventory`, but the schema defines `inventory_items` — the endpoint returns 500 whenever it is exercised against the real database. | Quality | High (when used) | Low | Low | Rename the query to `inventory_items` when wiring the Inventory page; add an integration test so the mismatch cannot return. | Tony | Week 3 | Open (known) |
+| R-001 | All 8 tables have row-level security **enabled with no policies**, and the backend's `service_role` key bypasses RLS entirely — until policies exist, any client-side access is denied outright, and a leaked secret key would expose every table. Blocked on the admin/member permissions being defined (REQ-003). | Security | Medium | High | High | Define the admin/member permission matrix per entity, then write RLS policies in a new timestamped migration. Keep `service_role` backend-only (`.env` is gitignored, never sent to the frontend). | Alex (permissions) / Nico (policies) | Week 3 | Open |
+| R-002 | API endpoints (e.g. `GET /api/inventory`) have no server-side authentication, and Flask runs with wide-open CORS (`CORS(app)`) — any origin can call any endpoint today. Harmless while only auth endpoints exist, but becomes a data-exposure risk the moment real records are served. | Security | High | High | High | Validate Supabase JWTs on protected routes and restrict CORS to the frontend origin. **Code merged 11/22/26 (commit `61f872e`, PR #22):** `login_required` verifies the bearer token via `auth.get_user` (401 on missing/invalid/expired) and CORS is restricted to the `CORS_ORIGINS` allowlist. Remaining: live retest of the curl matrix; role-based 403 checks follow the permission matrix (D1). | Tony / Nico | Week 3 | Mitigated in code (retest pending) |
+| R-003 | Sessions are stored in `localStorage` with **no refresh flow** — once `expires_at` passes, users hit a dead session, and a token in `localStorage` is readable by any injected script (XSS). | Technical | High | Medium | Medium | Implement the refresh-token flow (TODO in `frontend/src/lib/auth.js`) before login/signup are called done; revisit httpOnly cookies as a hardening step before launch. | Aaron | Week 3 | Open (documented in code) |
+| R-004 | Requirements call for administrator-issued invitations (REQ-001, UC-01), but the shipped flow is open self-service signup — requirements and implementation have diverged. | Requirements / Scope | High | Medium | Medium | Either build the invitation flow before auth is declared complete, or get stakeholder sign-off to re-scope REQ-001 as self-service signup for this deliverable. | Alex / Aaron | Week 3 | Open |
+| R-005 | `GET /api/inventory` queries a table named `Inventory`, but the schema defines `inventory_items` — the endpoint returns 500 whenever it is exercised against the real database. | Quality | High (when used) | Low | Low | Rename the query to `inventory_items`; guard the mismatch with tests. **Done 11/22/26 (commit `61f872e`, PR #22):** query renamed and unit tests assert the table name. Live retest (IT-005) against the test database pending. | Tony | Week 3 | Resolved in code (retest pending) |
 | R-006 | Alex's shipment-tracking branch diverged before the route restructure and shadcn adoption (own navbar, own CSS, old routes) — merging it as-is would create a second navigation and conflict with `AppLayout`/`NAV_ITEMS`. | Technical / Integration | Medium | Medium | Medium | Rebase `Alex---Shipment-Tracking-page` onto current `main`; port the sketch's content into `AppLayout` + shadcn components instead of carrying parallel styles. | Alex / Aaron | Week 3 (before merge) | Open |
 | R-007 | The unit test plan (UT-001–UT-041) far exceeds implemented coverage: UT-012–UT-032 target endpoints that do not exist yet (logout, auth guards, roles, invitations, customers, orders). Defects could slip through those areas. | Quality | Medium | Medium | Medium | Track implemented vs. planned explicitly (done in §8.b); pair every new endpoint with its planned test rows in the same PR. | Patricia | Week 5 | In progress (plan tracked) |
 | R-008 | Local and hosted Supabase configurations drifted: `config.toml` disables email confirmations locally, but the hosted project has them on — this already caused the "confirm email" bug during signup testing. | Configuration | Low | Medium | Low | Signup no longer depends on the setting (admin API pre-confirms every user, so behavior is deterministic); document hosted auth settings in the repo so drift is caught in review. | Nico | Done | Mitigated |
@@ -683,12 +704,14 @@ First execution **10/29/26** on build `c568b28`, tester Aaron, against the local
 - Session storage strategy: keep `localStorage` (simple, XSS-exposed) vs. move to httpOnly cookies (more infrastructure) before launch.
 - Token refresh design: silent client-side refresh vs. proxying refreshes through the Flask backend.
 - Production deployment target — today everything runs locally with only Supabase in the cloud; hosting for frontend and backend is undetermined (noted in §3.b).
-- Reconcile the `Inventory` / `inventory_items` naming once and for all (code vs. schema).
+- ~~Reconcile the `Inventory` / `inventory_items` naming once and for all (code vs. schema).~~ Resolved 11/22/26 (commit `61f872e`) — the code now uses the schema's `inventory_items` everywhere, with tests asserting it.
 
 ### Unanswered Questions
 
 - [x] Do we keep self-service signup alongside the invitation flow when it is built, or does it replace one of them? (R-004) — **Answered 11/27 (DEC-003):** invitation flow replaces open signup entirely; `/api/signup` is removed.
 - [ ] Must the backend validate JWTs before any non-auth data endpoint goes live, or is the open-API phase acceptable until launch? (R-002)
+- [ ] Do we keep self-service signup alongside the invitation flow when it is built, or does it replace one of them? (R-004)
+- [x] Must the backend validate JWTs before any non-auth data endpoint goes live, or is the open-API phase acceptable until launch? (R-002) — **Resolved 11/22/26:** all data endpoints now enforce JWT validation via the `login_required` decorator (commit `61f872e`); new data endpoints must be decorated before they go live.
 - [ ] Which hosted Supabase auth settings do we standardize on (confirm-email off?), and who documents them? (R-008)
 - [ ] Disposition of Alex's branch: rebase onto the shadcn shell, or treat the sketch as design-only and rebuild the page? (R-006)
 
