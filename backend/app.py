@@ -1,7 +1,8 @@
 import os
+from functools import wraps
 
 from dotenv import load_dotenv
-from flask import Flask, request
+from flask import Flask, g, request
 from flask_cors import CORS
 from supabase import (
     AuthApiError,
@@ -13,8 +14,19 @@ from supabase import (
 
 load_dotenv()
 
+# Browser origins allowed to call the API. Comma-separated in the env so
+# deployed frontends can be added without a code change; the defaults cover
+# the Vite dev server.
+allowed_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
+    ).split(",")
+    if origin.strip()
+]
+
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=allowed_origins)
 
 supabase_url = os.getenv("SUPABASE_URL")
 # SUPABASE_KEY kept as a fallback so older local setups still work; the
@@ -42,6 +54,41 @@ def serialize_session(session) -> dict | None:
         "expires_at": session.expires_at,
         "token_type": session.token_type,
     }
+
+
+def login_required(view):
+    """Reject requests without a valid Supabase access token (GEN-004).
+
+    Verifies the Bearer token against Supabase Auth (signature, expiry and
+    audience are checked server-side) and stores the authenticated user on
+    flask.g for the wrapped view.
+    """
+
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        auth_header = request.headers.get("Authorization", "")
+        scheme, _, token = auth_header.partition(" ")
+        if scheme.lower() != "bearer" or not token.strip():
+            return {"error": "Authentication required"}, 401
+
+        supabase = get_supabase_client()
+        if supabase is None:
+            return {"error": "Supabase is not configured"}, 503
+
+        try:
+            response = supabase.auth.get_user(token.strip())
+        except Exception:
+            # get_user raises on any Supabase Auth API error; see
+            # https://supabase.com/docs/reference/python/auth-getuser
+            return {"error": "Invalid or expired token"}, 401
+
+        if response is None or response.user is None:
+            return {"error": "Invalid or expired token"}, 401
+
+        g.user = response.user
+        return view(*args, **kwargs)
+
+    return wrapped
 
 
 @app.get("/api/health")
@@ -172,6 +219,7 @@ def signup():
 
 
 @app.get("/api/inventory")
+@login_required
 def get_inventory():
     try:
         supabase = get_supabase_client()
@@ -179,7 +227,10 @@ def get_inventory():
         if supabase is None:
             return {"error": "Supabase is not configured"}, 503
 
-        response = supabase.table("Inventory").select("*").execute()
+        # The schema table is inventory_items (see
+        # supabase/migrations/20261024000000_initial_schema.sql); "Inventory"
+        # never existed and made this endpoint 500 with PGRST205.
+        response = supabase.table("inventory_items").select("*").execute()
         return {"data": response.data}, 200
 
     except Exception:
